@@ -207,7 +207,10 @@ export const LearningModule = z.object({
   modality: Modality,                    // the current teaching flavor
 
   // The actual content: an ordered stack of bricks.
-  blocks: z.array(Block).min(2).max(6),
+  // min(1), not min(2): the emergency safeFallback() module is a single
+  // explain block, and the fallback must satisfy its own schema.
+  // (Bug found by Codex during the Day 1 spike, 7/16.)
+  blocks: z.array(Block).min(1).max(6),
 
   // Pass/fail rule for the whole module.
   // PLAIN ENGLISH: "how many of the gradeable bricks (codeExercise,
