@@ -28,6 +28,7 @@ The core idea is simple:
 ## Table of contents
 
 - [What Dean is](#what-dean-is)
+- [Why not just use ChatGPT?](#why-not-just-use-chatgpt)
 - [Build Week experience](#build-week-experience)
 - [How Dean works](#how-dean-works)
 - [Verification tiers](#verification-tiers)
@@ -70,6 +71,38 @@ Dean's long-term boundary is **professional capability**, not one programming
 language or school subject. SQL remains important because it supports exact,
 machine-verifiable exercises. In the Build Week product, SQL serves the broader
 Data to Decision outcome instead of defining the whole platform.
+
+## Why not just use ChatGPT?
+
+ChatGPT can already explain a topic, answer questions, and act as a capable
+tutor. Dean's difference is not access to a smarter model. Dean turns that
+model into a structured learning system, so the learner does not have to
+design and manage the entire teaching process through prompts.
+
+| A normal ChatGPT conversation | Dean |
+| --- | --- |
+| Responds to the latest prompt | Works from an explicit curriculum |
+| Depends on the learner to decide what to ask next | Manages the learning sequence and current position |
+| Keeps most personalization inside conversation context | Stores the learner profile, curriculum, and lesson plans as inspectable files |
+| May rely on model judgment when reviewing an answer | Uses deterministic checks where possible and labels weaker forms of verification honestly |
+| Can explain a mistake another way when asked | Is designed to detect failure, change the teaching strategy, and rewrite the relevant lesson |
+| Can lose a clear sense of progress in a long conversation | Tracks outcomes, difficulty, evidence, and lesson status |
+| Produces useful answers and examples | Aims to help the learner produce a useful professional decision or artifact |
+
+The clearest difference is **visible adaptation**. When a learner struggles,
+Dean is designed to identify the specific failure, choose a different teaching
+method, rewrite the affected lesson plan, show what changed, and give the
+learner another opportunity to demonstrate the skill. The adjustment becomes
+part of the learner's inspectable tutor rather than an invisible change in the
+next model response.
+
+Someone could reproduce parts of Dean with a long, carefully managed ChatGPT
+conversation. Dean's product value is making that process repeatable,
+inspectable, evidence-aware, and usable by someone who does not know how to
+engineer the perfect sequence of prompts.
+
+> **ChatGPT can tutor you. Dean builds and manages a personalized tutor around
+> your goal.**
 
 ## Build Week experience
 
