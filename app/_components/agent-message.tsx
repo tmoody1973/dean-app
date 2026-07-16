@@ -102,6 +102,9 @@ function AgentMessagePart({
     case "authorization":
       return <AuthorizationPrompt part={part} />;
     case "dynamic-tool":
+      if (part.toolName === "render_module") {
+        return <pre>{JSON.stringify(part.input, null, 2)}</pre>;
+      }
       return (
         <Tool
           defaultOpen={part.state === "approval-requested" || part.state === "approval-responded"}
