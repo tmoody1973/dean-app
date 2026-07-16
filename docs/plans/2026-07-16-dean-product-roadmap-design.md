@@ -1,18 +1,21 @@
 # Dean product roadmap and Linear project design
 
-- **Status:** Approved design; Linear creation pending final approval
+- **Status:** Approved design; Linear project and 33 issues created
 - **Date:** 2026-07-16
 - **Repository:** https://github.com/tmoody1973/dean-app
+- **Linear project:** https://linear.app/moodyco/project/dean-professional-learning-platform-bdc85a1300c6
+- **Linear team:** Moodyco (`MOO`)
 - **Build Week deadline:** July 21, 2026, 5:00 PM PT
 
 ## Purpose
 
 This document defines Dean's product direction, Build Week scope, planning
-workflow, and proposed Linear project. It is the durable design source for the
-project and issue drafts below. Linear will own execution status, dependencies,
-acceptance criteria, and verification evidence after creation.
+workflow, and approved Linear project. It is the durable design source for the
+project and issue contracts below. Linear owns execution status, dependencies,
+acceptance criteria, and verification evidence.
 
-This draft does not create or modify any Linear record.
+Linear creation completed on July 16, 2026 after an exact-title duplicate audit
+of the project and all 33 approved issues.
 
 ## Product north star
 
@@ -134,7 +137,7 @@ Communication as the judgment-supported preview.
 - Requirements: `docs/dean-product-brief-and-prd.md`
 - Platform evidence: `docs/spike-findings.md`
 - Approved designs: `docs/plans/`
-- Execution status and evidence: Linear
+- Execution status and evidence: [Linear project](https://linear.app/moodyco/project/dean-professional-learning-platform-bdc85a1300c6)
 - Source and implementation history: GitHub
 
 The Build Week phase retains the July 21 deadline. The overall product roadmap
@@ -143,10 +146,10 @@ activation.
 
 ## Build Week issue contracts
 
-The identifiers below are draft aliases. Linear will assign real identifiers
-when the approved issues are created.
+Parenthetical identifiers below are durable roadmap aliases. The leading
+`MOO-*` identifiers are the real Linear issues.
 
-### MVP-01 — Establish the Linear-driven development workflow
+### MOO-269 (MVP-01) — Establish the Linear-driven development workflow
 
 #### Intent
 
@@ -174,7 +177,7 @@ Linear issue contracts, commits, and verification evidence.
 - Product feature implementation.
 - Arbitrary automation between GitHub and Linear.
 
-### MVP-02 — Generalize Dean's MVP track and verification contracts
+### MOO-270 (MVP-02) — Generalize Dean's MVP track and verification contracts
 
 #### Intent
 
@@ -205,7 +208,7 @@ verification-tier metadata while preserving the validated tool boundaries.
 - General-purpose learn-anything routing.
 - Changes to the fixed GPT-5.6 model configuration.
 
-### MVP-03 — Build the safe Brilliant-inspired module shell
+### MOO-271 (MVP-03) — Build the safe Brilliant-inspired module shell
 
 #### Intent
 
@@ -235,7 +238,7 @@ validated learning block at a time.
 - Course-level navigation.
 - Gamification.
 
-### MVP-04 — Implement the seven interactive learning components
+### MOO-272 (MVP-04) — Implement the seven interactive learning components
 
 #### Intent
 
@@ -266,7 +269,7 @@ Dean's Brilliant-inspired interaction grammar.
 - New block types outside `lib/module-spec.ts`.
 - Streaks, XP, leagues, or achievement animation.
 
-### MVP-05 — Implement deterministic exercise grading
+### MOO-273 (MVP-05) — Implement deterministic exercise grading
 
 #### Intent
 
@@ -298,7 +301,7 @@ model judgment.
 - Unbounded shell execution.
 - Support for every future subject.
 
-### MVP-06 — Connect learning components to grading events
+### MOO-274 (MVP-06) — Connect learning components to grading events
 
 #### Intent
 
@@ -326,7 +329,7 @@ narration is empty or delayed.
 - Model-authored pass/fail decisions.
 - Cross-session analytics.
 
-### MVP-07 — Build the complete Data to Decision hero track
+### MOO-275 (MVP-07) — Build the complete Data to Decision hero track
 
 #### Intent
 
@@ -361,7 +364,7 @@ teacher around a career outcome rather than a single technical subject.
 - A full business-intelligence product.
 - Additional complete career tracks.
 
-### MVP-08 — Build the Codex work-tool secondary track
+### MOO-276 (MVP-08) — Build the Codex work-tool secondary track
 
 #### Intent
 
@@ -392,7 +395,7 @@ tested artifact with Codex.
 - Arbitrary production deployment.
 - Autonomous modification of unrelated learner repositories.
 
-### MVP-09 — Build the Executive Communication preview track
+### MOO-277 (MVP-09) — Build the Executive Communication preview track
 
 #### Intent
 
@@ -422,7 +425,7 @@ without disguising model opinion as deterministic mastery.
 - A complete leadership curriculum.
 - Automated hiring or employee evaluation.
 
-### MVP-10 — Implement evidence-driven hero adaptation
+### MOO-278 (MVP-10) — Implement evidence-driven hero adaptation
 
 #### Intent
 
@@ -451,7 +454,7 @@ repeating the same explanation.
 - Personalized adaptation analytics across many learners.
 - Automatic schema changes.
 
-### MVP-11 — Polish the three-track demo experience
+### MOO-279 (MVP-11) — Polish the three-track demo experience
 
 #### Intent
 
@@ -480,7 +483,7 @@ clear within a short judging session.
 - New learning components.
 - Gamification.
 
-### MVP-12 — Add guardrails and scheduled review
+### MOO-280 (MVP-12) — Add guardrails and scheduled review
 
 #### Intent
 
@@ -507,7 +510,7 @@ learner leaves.
 - Full account-based quotas.
 - CAPTCHA, WAF automation, or abuse machine learning.
 
-### MVP-13 — Deploy and verify production durability
+### MOO-281 (MVP-13) — Deploy and verify production durability
 
 #### Intent
 
@@ -535,7 +538,7 @@ across real production lifecycle events.
 - Multi-region architecture.
 - Post-hackathon account migration.
 
-### MVP-14 — Validate and prepare the submission package
+### MOO-282 (MVP-14) — Validate and prepare the submission package
 
 #### Intent
 
@@ -591,98 +594,98 @@ implementation begins.
 - Implementation inside the outcome issue itself.
 - Marking the outcome Done because a design exists.
 
-### ROAD-15 — Generalize the compiler beyond curated MVP tracks
+### MOO-283 (ROAD-15) — Generalize the compiler beyond curated MVP tracks
 
 **Intent:** Make learner profiles, curriculum generation, lessons, adaptation,
 and mastery contracts domain-neutral without becoming an unbounded generic
 chat tutor.
 
-### ROAD-16 — Build the production verification-tier framework
+### MOO-284 (ROAD-16) — Build the production verification-tier framework
 
 **Intent:** Give every track a consistent machine-verifiable, structurally
 verifiable, or judgment-supported contract and UI language.
 
-### ROAD-17 — Guarantee durable learner state
+### MOO-285 (ROAD-17) — Guarantee durable learner state
 
 **Intent:** Preserve curriculum, progress, evidence, and recovery across
 devices, deployments, failures, and sandbox replacement.
 
-### ROAD-18 — Add identity, product state, entitlements, and billing
+### MOO-286 (ROAD-18) — Add identity, product state, entitlements, and billing
 
 **Intent:** Attach user identity to eve-owned agent state while keeping
 account-level records and entitlements in the product data layer.
 
-### ROAD-19 — Add production observability, abuse controls, and cost limits
+### MOO-287 (ROAD-19) — Add production observability, abuse controls, and cost limits
 
 **Intent:** Measure failures, latency, model cost, and anomalous use, then apply
 limits that protect users and the service.
 
-### ROAD-20 — Make scheduled reviews reliable across channels
+### MOO-288 (ROAD-20) — Make scheduled reviews reliable across channels
 
 **Intent:** Deliver, retry, observe, and explain spaced-review check-ins for
 parked tutors.
 
-### ROAD-21 — Launch the Data and Analytics career path
+### MOO-289 (ROAD-21) — Launch the Data and Analytics career path
 
 **Intent:** Expand the hero into a complete path spanning SQL, spreadsheets,
 statistics, visualization, analysis, and decision communication.
 
-### ROAD-22 — Launch the Automation and Developer Tools path
+### MOO-290 (ROAD-22) — Launch the Automation and Developer Tools path
 
 **Intent:** Teach professionals to use Python, Bash, Git, regex, Codex, and
 workflow automation to build useful work artifacts.
 
-### ROAD-23 — Launch the Operations and Project Management path
+### MOO-291 (ROAD-23) — Launch the Operations and Project Management path
 
 **Intent:** Teach planning, prioritization, risk, process design, and delivery
 through structurally verifiable professional scenarios.
 
-### ROAD-24 — Launch the Professional Communication and Leadership path
+### MOO-292 (ROAD-24) — Launch the Professional Communication and Leadership path
 
 **Intent:** Teach writing, presenting, feedback, delegation, and leadership
 through transparent judgment-supported practice.
 
-### ROAD-25 — Launch the Career Transition path
+### MOO-293 (ROAD-25) — Launch the Career Transition path
 
 **Intent:** Help learners build role-specific capability plans, interview
 practice, portfolio artifacts, and evidence of professional growth.
 
-### ROAD-26 — Create a professional-skill authoring kit
+### MOO-294 (ROAD-26) — Create a professional-skill authoring kit
 
 **Intent:** Let new domains define exercises, verification methods,
 modalities, and adaptation strategies without rewriting Dean's core.
 
-### ROAD-27 — Ship the Slack workday tutor
+### MOO-295 (ROAD-27) — Ship the Slack workday tutor
 
 **Intent:** Deliver short lessons and scheduled reviews inside a professional's
 daily work environment.
 
-### ROAD-28 — Add Discord, Calendar, Gmail, and Drive pathways
+### MOO-296 (ROAD-28) — Add Discord, Calendar, Gmail, and Drive pathways
 
 **Intent:** Extend tutor access, review delivery, scheduling, and source
 ingestion through retention-driven integrations.
 
-### ROAD-29 — Build expert-authored tutor templates
+### MOO-297 (ROAD-29) — Build expert-authored tutor templates
 
 **Intent:** Let experienced practitioners define reusable teaching structures
 that Dean personalizes for each learner.
 
-### ROAD-30 — Build tutor discovery and marketplace mechanics
+### MOO-298 (ROAD-30) — Build tutor discovery and marketplace mechanics
 
 **Intent:** Help learners find trusted tutor templates while preserving clear
 verification and quality boundaries.
 
-### ROAD-31 — Support standalone per-learner tutor deployments
+### MOO-299 (ROAD-31) — Support standalone per-learner tutor deployments
 
 **Intent:** Evaluate when a learner's compiled tutor should become an
 independently deployable eve project.
 
-### ROAD-32 — Add organization-level learning programs
+### MOO-300 (ROAD-32) — Add organization-level learning programs
 
 **Intent:** Let teams define professional outcomes, assign learning paths, and
 review aggregate evidence without exposing private learner work.
 
-### ROAD-33 — Evaluate one sandboxed wildcard interactive
+### MOO-301 (ROAD-33) — Evaluate one sandboxed wildcard interactive
 
 **Intent:** Test whether one constrained generated interactive can extend the
 registry without weakening rendering safety or demo reliability.
@@ -697,17 +700,17 @@ The Build Week critical path is:
 after the shared track and module contracts stabilize. `MVP-12` can proceed
 alongside track implementation, then must pass before deployment.
 
-## Linear creation gate
+## Linear creation record
 
-Before creating anything in Linear:
+Completed on July 16, 2026:
 
-1. Resolve the real Linear team with `list_teams`.
-2. Search existing projects to avoid a duplicate.
-3. Present this complete project and issue draft for explicit approval.
-4. Create the parent project.
-5. Create every approved issue under that project.
-6. Apply real identifiers to this plan and relevant repository documents.
-7. Set only the active planning issue In Progress; leave later work in Backlog.
+1. Resolved the sole active Linear team as Moodyco (`MOO`).
+2. Confirmed no duplicate Dean project or exact-title issue existed, including
+   archived records.
+3. Received explicit approval for this complete project and issue draft.
+4. Created the [parent project](https://linear.app/moodyco/project/dean-professional-learning-platform-bdc85a1300c6).
+5. Created all 33 approved issues as `MOO-269` through `MOO-301`.
+6. Applied the real identifiers to this plan.
+7. Set only `MOO-269` In Progress; left the other 32 issues in Backlog.
 
-Until that approval, this document remains the proposed roadmap rather than an
-external execution record.
+No product implementation began during Linear creation.
