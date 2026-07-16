@@ -1,155 +1,242 @@
 # Dean
 
-**Dean does not enroll you in a course. It compiles a teacher for you.**
+**Dean does not enroll you in a course. It compiles a teacher for the
+professional capability you need next.**
 
-Dean is an experimental, personalized SQL tutor built for the OpenAI Build Week 2026 Education Track. A learner describes what they want to accomplish, answers three short calibration questions, and Dean uses those answers to build a four-lesson curriculum as files. The resulting tutor teaches through structured learning modules instead of long, generic chat responses.
+Dean is an experimental professional-learning platform built for the OpenAI
+Build Week 2026 Education Track. A learner names a career outcome, answers a
+few calibration questions, and watches Dean create an inspectable curriculum
+as files. The resulting tutor teaches through short interactive modules,
+adapts when evidence shows that the learner is stuck, and states how strongly
+it can verify the learner's work.
 
 The core idea is simple:
 
 - personalize the **teacher**, not just the conversation;
-- teach through typed, interactive learning blocks;
-- grade executable work with deterministic code rather than AI opinion;
-- visibly change the curriculum when a learner struggles.
+- teach one concept at a time through typed interactive blocks;
+- verify work with the strongest honest method available;
+- visibly change the curriculum when a learner struggles;
+- help learners produce useful professional decisions and artifacts.
 
 > [!IMPORTANT]
-> This repository currently contains the verified **Day 1 foundation and spike configuration**. The model, agent instructions, curriculum skills, schema contract, tool boundary, and frontend event path are in place. The complete module renderer, deterministic grading loop, adaptation UI, and deployment work are planned but not yet finished. See [Current status](#current-status) for the exact boundary.
+> This repository currently contains the verified **Day 1 foundation** and the
+> approved three-track Build Week plan. The running agent still opens with the
+> SQL calibration flow until the track-routing milestone is implemented. The
+> complete renderer, grading loop, three-track content, adaptation UI, and
+> deployment remain planned work. See [Current status](#current-status) for the
+> exact boundary.
 
 ## Table of contents
 
-- [Why Dean exists](#why-dean-exists)
-- [How it works](#how-it-works)
+- [What Dean is](#what-dean-is)
+- [Build Week experience](#build-week-experience)
+- [How Dean works](#how-dean-works)
+- [Verification tiers](#verification-tiers)
+- [Learning experience](#learning-experience)
 - [Current status](#current-status)
 - [Architecture](#architecture)
-- [The learning-module contract](#the-learning-module-contract)
+- [Learning-module contract](#learning-module-contract)
 - [Technology](#technology)
 - [Run it locally](#run-it-locally)
-- [Smoke test](#smoke-test)
+- [Smoke test the current baseline](#smoke-test-the-current-baseline)
 - [Project structure](#project-structure)
 - [Available commands](#available-commands)
 - [Safety and design constraints](#safety-and-design-constraints)
-- [Verified spike findings](#verified-spike-findings)
-- [How GPT-5.6 and Codex are used](#how-gpt-56-and-codex-are-used)
+- [How GPT-5.6, Codex, and Linear are used](#how-gpt-56-codex-and-linear-are-used)
 - [Roadmap](#roadmap)
 - [Documentation](#documentation)
 
-## Why Dean exists
+## What Dean is
 
-Most AI tutors personalize a conversation while leaving the underlying teacher unchanged. They often provide the same explanation format to every learner, grade answers subjectively, and respond to failure by repeating the same idea with more words.
+Most AI tutors personalize a conversation while leaving the underlying teacher
+unchanged. They may use the same explanation format for every learner, treat
+model opinion as grading, or answer failure with a longer version of the same
+explanation.
 
-Dean takes a different approach. It treats a tutor as a set of inspectable files:
+Dean treats a tutor as an inspectable program made from files:
 
 - a learner profile;
 - a curriculum map;
-- individual lesson plans;
+- lesson plans;
+- verification contracts;
 - teaching and recovery strategies;
-- eventually, review schedules and progress state.
+- eventually, review schedules and progress evidence.
 
-Those files become the source of truth for one learner's tutor. When the learner struggles, Dean can rewrite the relevant plan and teach the concept using a different modality. The adaptation is an auditable file change, not an invisible prompt adjustment.
+Those files become the source of truth for one learner's tutor. When the
+learner struggles, Dean can rewrite the relevant lesson and teach the concept
+through a different modality. The adaptation becomes a visible file change,
+not an invisible prompt adjustment.
 
-The first supported subject is deliberately narrow: **SQL**. SQL is a strong fit because exercises can run against real data and their results can be checked exactly.
+Dean's long-term boundary is **professional capability**, not one programming
+language or school subject. SQL remains important because it supports exact,
+machine-verifiable exercises. In the Build Week product, SQL serves the broader
+Data to Decision outcome instead of defining the whole platform.
 
-## How it works
+## Build Week experience
+
+The Build Week MVP deliberately proves breadth and depth with three curated
+tracks. It does not promise arbitrary “learn anything” behavior.
+
+| Track | Build Week depth | Learner outcome | Verification |
+| --- | --- | --- | --- |
+| **Data to Decision** | Complete hero journey | Turn campaign data into a recommendation a director can act on | Machine and structural checks |
+| **Build a Work Tool with Codex** | One polished lesson and artifact | Turn repetitive work into a small tested tool | File, build, or test evidence |
+| **Executive Communication** | One interactive preview | Turn a complex update into a concise leadership recommendation | Clearly labeled judgment-supported feedback |
+
+### Data to Decision
+
+The hero journey covers business-question framing, SQL-based retrieval,
+visualization interpretation, recommendation writing, deterministic checks,
+failure-driven adaptation, and a visible curriculum change.
+
+### Build a Work Tool with Codex
+
+The learner identifies repetitive work, writes acceptance criteria, uses Codex
+to build the smallest useful tool, tests it, and explains what changed. The
+artifact must pass a bounded file, build, or test check.
+
+### Executive Communication
+
+The learner converts a complex update into a leadership recommendation. Dean
+uses a visible rubric, cites observable differences between revisions, and
+labels the feedback as guided judgment rather than verified mastery.
+
+## How Dean works
 
 Dean operates in two phases.
 
 ### 1. Dean phase: compile the tutor
 
-For a new learner, Dean asks exactly three calibration questions, one at a time:
+For a new learner, Dean asks calibration questions one at a time. The questions
+identify the learner's desired professional outcome, existing knowledge, work
+context, and current ability. Dean then writes a personalized learner profile,
+curriculum, and lesson files to the agent's `/workspace` directory.
 
-1. **Goal:** What do you want to be able to do with SQL?
-2. **Anchor:** What do you already use that involves data—spreadsheets, dashboards, a CRM, or code?
-3. **Reality check:** What does a small `SELECT` statement appear to do?
+The files make the teaching plan inspectable. The learner can see the
+curriculum appear, understand what Dean plans to teach, and later compare a
+lesson before and after adaptation.
 
-The answers determine the examples, analogies, and starting difficulty. Dean then writes the personalized curriculum to the agent's `/workspace` directory in this order:
+### 2. Tutor phase: teach, verify, and adapt
 
-1. `learner-profile.md`
-2. `curriculum.md`
-3. `lessons/01-select.md`
-4. `lessons/02-where.md`
-5. `lessons/03-inner-join.md`
-6. `lessons/04-group-by.md`
-
-### 2. Tutor phase: teach and adapt
-
-Once `/workspace/curriculum.md` exists, the agent switches to Tutor mode. Lessons must be delivered through the typed `render_module` tool.
+Once the curriculum exists, the agent switches to Tutor mode. Lessons must be
+delivered through the typed `render_module` tool.
 
 The planned learning loop is:
 
 1. read the learner profile and current lesson;
-2. compose a module from the approved learning-block types;
-3. validate it at the tool boundary;
-4. render one block at a time in the browser;
-5. run and deterministically grade learner exercises;
-6. continue when mastery is met;
-7. regenerate the lesson in a different modality when mastery is not met.
+2. compose a module from approved learning-block types;
+3. validate the module at the tool boundary;
+4. render one block at a time;
+5. verify the learner's work using the track's declared tier;
+6. advance when the evidence meets the stated threshold;
+7. rebuild the lesson in a different modality when the learner is stuck.
+
+## Verification tiers
+
+Dean must never claim more certainty than the evidence supports.
+
+1. **Machine-verifiable** work can be executed or compared exactly. Examples
+   include queries, code, formulas, files, tests, and structured output.
+2. **Structurally verifiable** work can be checked for required components,
+   constraints, and relationships, even when several good answers exist.
+3. **Judgment-supported** work needs critique, simulation, or a rubric. Dean
+   may coach writing, leadership, strategy, and communication, but it must not
+   present model judgment as deterministic mastery.
+
+The verification tier belongs to the track contract and must be visible to the
+learner.
+
+## Learning experience
+
+Dean uses Brilliant.org as interaction inspiration, not as a visual or brand
+clone. The approved interaction grammar is:
+
+- show one learning block at a time;
+- display a thin progress indicator;
+- lead with interaction when the concept allows it;
+- keep on-screen explanation brief;
+- provide one prominent action for gradeable work;
+- return immediate, unmistakable feedback;
+- reveal hints progressively;
+- use generous whitespace, one accent color, and minimal shell chrome.
+
+Streaks, XP, leagues, and unrelated gamification are outside the Build Week
+thesis.
 
 ## Current status
 
 ### Verified and present
 
-- GPT-5.6 is configured through Vercel AI Gateway as `openai/gpt-5.6-luna`.
+- GPT-5.6 is configured through Vercel AI Gateway as
+  `openai/gpt-5.6-luna`.
 - The required `modelContextWindowTokens: 200_000` override is configured.
-- Dean's SQL-only instructions and both curriculum skills are installed.
+- The current SQL foundation instructions and both curriculum skills are
+  installed.
 - The seven-block Zod learning-module schema is defined.
-- `render_module` uses that schema directly as its `inputSchema`.
+- `render_module` imports that schema directly as its `inputSchema`.
 - Valid module tool events reach the browser through eve's session stream.
 - Invalid modules are rejected at the tool boundary.
-- Local Docker-backed workspace files survived session parking and a full local server restart during the spike.
+- Local Docker-backed workspace files survived session parking and a full
+  local server restart during the spike.
 - The emergency fallback module satisfies the schema with one explain block.
+- The professional-learning roadmap and Linear issue contracts are approved
+  under `docs/plans/`.
 
-### Not finished yet
+### Planned but not finished
 
-- The frontend still shows `render_module` input in a raw development view; the complete component registry is not built.
+- The runtime still needs routing for the three curated tracks.
+- The frontend still shows `render_module` input in a raw development view.
+- The seven production learning components are not built.
 - SQL execution and deterministic grading are not wired into the learner UI.
-- The full calibration-to-curriculum flow has not completed its end-to-end browser acceptance test.
-- Failure-driven lesson rewriting and the visible curriculum diff are not built.
-- The birth animation, guardrails, scheduling, and deployment are not complete.
-- Workspace persistence has not yet been verified on the deployed Vercel Sandbox backend.
+- The complete Data to Decision journey has not passed browser acceptance.
+- The Codex artifact lesson and Executive Communication preview are not built.
+- Failure-driven rewriting and the visible curriculum diff are not built.
+- Guardrails, scheduled review, deployment, and submission validation remain.
+- Workspace persistence has not been verified on deployed Vercel Sandbox.
 
-This distinction is intentional: the repository documents verified behavior separately from planned product work.
+The repository separates verified behavior from planned product work so that
+roadmap language never masquerades as shipped functionality.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Learner["Learner"] --> Web["Next.js web chat"]
+    Learner["Learner"] --> Web["Next.js learning interface"]
     Web --> Hook["useEveAgent session client"]
     Hook --> Runtime["eve durable agent runtime"]
     Runtime --> Model["GPT-5.6 via AI Gateway"]
-    Runtime <--> Workspace["Per-session /workspace curriculum files"]
+    Runtime <--> Workspace["Per-session curriculum files"]
     Model --> Tool["render_module tool"]
     Tool --> Schema["Zod LearningModule contract"]
     Schema --> Events["Validated session events"]
     Events --> Web
-    Runtime -. planned .-> Grader["Deterministic SQL grader"]
-    Grader -. pass/fail .-> Events
+    Runtime -. planned .-> Verifier["Tier-aware verification"]
+    Verifier -. evidence .-> Events
 ```
 
-The model decides what to teach and how to compose a lesson. Deterministic code owns validation, execution, and grading boundaries.
+The model decides what to teach and how to compose a lesson. Deterministic code
+owns validation, execution, and machine-verifiable grading. The product labels
+structural checks and model-supported judgment separately.
 
-## The learning-module contract
+## Learning-module contract
 
-[`lib/module-spec.ts`](lib/module-spec.ts) is the contract between GPT-5.6 and the screen. The model may compose lessons from seven approved block types:
+[`lib/module-spec.ts`](lib/module-spec.ts) is the contract between GPT-5.6 and
+the screen. The model may compose lessons from seven approved block types:
 
 | Block | Purpose |
 | --- | --- |
-| `explain` | A short Markdown explanation and the universal safe fallback |
-| `codeExercise` | An executable exercise with expected output and up to three hints |
-| `conceptDiagram` | A data-defined node-and-edge diagram |
-| `parameterSlider` | A small playground that changes a value inside a code template |
-| `dragMatch` | Deterministically graded matching pairs |
-| `quiz` | A multiple-choice check with an answer explanation |
-| `revealSequence` | A learner-paced sequence of small conceptual steps |
+| `explain` | Short Markdown explanation and universal safe fallback |
+| `codeExercise` | Executable exercise with expected output and progressive hints |
+| `conceptDiagram` | Data-defined node-and-edge diagram |
+| `parameterSlider` | Small playground that changes a value inside a template |
+| `dragMatch` | Deterministically checked matching pairs |
+| `quiz` | Multiple-choice check with answer explanation |
+| `revealSequence` | Learner-paced sequence of small conceptual steps |
 
-Each complete module also declares:
-
-- one concept and title;
-- difficulty: `intro`, `core`, or `stretch`;
-- modality: `hands-on`, `visual`, `interactive`, or `narrative`;
-- a mastery threshold;
-- an `onFailure` strategy that switches modality and may carry the learner's mistake forward.
-
-The model emits data, not JSX or HTML. The framework validates that data before the tool executes, and the frontend will validate it again before rendering.
+Each complete module also declares a concept, title, difficulty, modality,
+mastery threshold, and failure strategy. The model emits data, never generated
+JSX or HTML. The framework validates that data before the tool executes, and
+the frontend will validate it again before rendering.
 
 ## Technology
 
@@ -161,7 +248,7 @@ The model emits data, not JSX or HTML. The framework validates that data before 
 - **Agent UI:** `useEveAgent()` from `eve/react`
 - **Runtime target:** Node.js 24
 
-The exact dependency versions are pinned by `package-lock.json`.
+Exact dependency versions are pinned by `package-lock.json`.
 
 ## Run it locally
 
@@ -169,8 +256,8 @@ The exact dependency versions are pinned by `package-lock.json`.
 
 - Node.js 24.x
 - npm
+- Docker
 - a Vercel AI Gateway API key with access to the configured model
-- Docker available locally for eve's sandbox-backed workspace behavior
 
 ### 1. Clone the repository
 
@@ -187,13 +274,14 @@ npm install
 
 ### 3. Configure the model credential
 
-Create a `.env` file in the project root:
+Create `.env` in the project root:
 
-```bash
-printf 'AI_GATEWAY_API_KEY=replace_with_your_key\n' > .env
+```dotenv
+AI_GATEWAY_API_KEY=replace_with_your_key
 ```
 
-Replace `replace_with_your_key` with the real value. The repository's `.gitignore` covers `.env*`, so the local credential should not be committed.
+Replace the placeholder with the real value. `.gitignore` covers `.env*`, so
+the local credential must remain untracked.
 
 ### 4. Start the development server
 
@@ -201,7 +289,7 @@ Replace `replace_with_your_key` with the real value. The repository's `.gitignor
 npm run dev
 ```
 
-The Next.js integration starts the web application and the local eve runtime together. The initial sandbox open may take about 30 seconds.
+The initial sandbox open may take about 30 seconds.
 
 ### 5. Open the app
 
@@ -211,144 +299,190 @@ On macOS:
 open http://localhost:3000
 ```
 
-On other platforms, visit [http://localhost:3000](http://localhost:3000) in a browser.
+On other platforms, visit [http://localhost:3000](http://localhost:3000).
 
-## Smoke test
+## Smoke test the current baseline
 
-1. Load a fresh page at `http://localhost:3000`.
+The current runtime still uses the verified SQL calibration prompt. To confirm
+that the agent instructions and curriculum skill load correctly:
+
+1. Open a fresh page at `http://localhost:3000`.
 2. Enter `Hi` and submit it.
-3. The agent should begin with calibration question 1:
+3. Confirm that the agent asks:
 
    > What do you want to be able to DO with SQL?
 
-4. It should not behave like a general-purpose assistant or begin teaching immediately.
+4. Confirm that it does not act as a generic assistant or begin teaching
+   immediately.
 
-That response confirms that the main instructions and `dean-generate-curriculum` skill are loading. A newly loaded page has no persisted client cursor in the current scaffold, so the first submitted message starts a fresh durable session.
-
-Stop the development server with `Ctrl+C` when finished.
+This expected response will change when the approved three-track routing issue
+is implemented. Stop the server with `Ctrl+C`.
 
 ## Project structure
 
 ```text
 .
 ├── agent/
-│   ├── agent.ts                         # Model and context-window configuration
-│   ├── channels/eve.ts                  # Local and deployment channel authentication
-│   ├── instructions.md                  # Dean/Tutor phase rules
+│   ├── agent.ts                         # Model and context configuration
+│   ├── channels/eve.ts                  # Runtime channel authentication
+│   ├── instructions.md                  # Current Dean/Tutor phase rules
 │   ├── skills/
-│   │   ├── adapt-on-failure.md          # Recovery and modality-switching playbook
-│   │   └── dean-generate-curriculum.md  # Calibration and curriculum-generation playbook
+│   │   ├── adapt-on-failure.md          # Recovery playbook
+│   │   └── dean-generate-curriculum.md  # Calibration and curriculum playbook
 │   └── tools/render_module.ts           # Typed lesson-delivery boundary
 ├── app/
-│   ├── _components/                     # Web chat and message rendering
+│   ├── _components/                     # Learning UI and message rendering
 │   └── page.tsx                         # Main application page
 ├── docs/
-│   ├── build-playbook.md                # Ordered Days 2–5 implementation plan
-│   ├── dean-product-brief-and-prd.md     # Product rationale and requirements
-│   └── spike-findings.md                # Verified Day 1 evidence and sharp edges
+│   ├── plans/                           # Approved designs and issue contracts
+│   ├── build-playbook.md                # Original Build Week implementation plan
+│   ├── dean-product-brief-and-prd.md     # Product brief and requirements
+│   └── spike-findings.md                # Verified platform evidence
 ├── lib/
-│   └── module-spec.ts                   # Zod schema, parser, fallback, and example module
-├── AGENTS.md                            # Repository rules for coding agents
-└── package.json                         # Scripts and dependency declarations
+│   └── module-spec.ts                   # Schema, parser, fallback, and example
+├── AGENTS.md                            # Repository and Linear workflow rules
+├── README.md                            # Project overview and setup
+└── package.json                         # Scripts and dependencies
 ```
 
 ## Available commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start Next.js and the local eve runtime together |
+| `npm run dev` | Start the local web application and eve integration |
 | `npm run typecheck` | Run TypeScript validation without emitting files |
 | `npm run build` | Build the Next.js application |
 | `npm run start` | Start a previously built Next.js application |
-| `npm run dev:eve` | Start eve's development terminal UI directly |
+| `npm run dev:eve` | Start eve's development terminal UI |
 | `npm run build:eve` | Build the eve agent output |
 | `npm run start:eve` | Start a previously built eve agent |
 
 ## Safety and design constraints
 
-Dean's architecture establishes several hard boundaries:
-
-- **SQL only for v1.** The current agent must decline other teaching subjects.
-- **Typed rendering only.** Model output is rendered as registry data, never raw generated JSX or HTML.
-- **No `dangerouslySetInnerHTML`.** Markdown rendering must not become an HTML injection path.
-- **No AI grading.** The model may coach the learner, but only deterministic output comparison may determine pass or fail.
-- **Tool-boundary validation.** Invalid learning modules are rejected before `render_module` executes.
-- **Frontend fallback.** Invalid input must eventually render a safe explanation instead of a broken screen.
-- **Auditable curriculum.** Runtime curriculum files belong in `/workspace` and are changed through file tools.
+- **Three curated tracks for Build Week.** The MVP supports Data to Decision,
+  Build a Work Tool with Codex, and Executive Communication. Arbitrary subjects
+  remain outside the active milestone.
+- **Current runtime truth.** Until track routing ships, the running agent
+  remains the verified SQL foundation rather than pretending to support work
+  that has not been built.
+- **Typed rendering only.** The model emits registry data, never raw generated
+  JSX or HTML.
+- **No `dangerouslySetInnerHTML`.** Markdown must not create an HTML injection
+  path.
+- **Tier-aware verification.** Deterministic code owns machine-verifiable
+  results; structural and judgment-supported work must be labeled honestly.
+- **Tool-boundary validation.** Invalid learning modules are rejected before
+  `render_module` executes.
+- **Safe frontend fallback.** Invalid UI input must render a safe explanation
+  instead of a broken screen.
+- **Auditable curriculum.** Runtime curriculum files belong in `/workspace`
+  and change through file tools.
 - **Credential hygiene.** `.env` files are ignored and must never be committed.
 
-Production guardrails such as public-route authentication, per-session rate limiting, grading timeouts, and output-size caps remain roadmap work and must be completed before deployment.
+Public-route access controls, session limits, grading timeouts, and output-size
+caps must pass before deployment.
 
 ## Verified spike findings
 
 The Day 1 spike established four load-bearing facts:
 
-1. **GPT-5.6 works through AI Gateway.** Streaming was observed with `openai/gpt-5.6-luna`; eve requires the explicit 200,000-token context-window override.
-2. **Workspace files persist locally.** A sentinel file survived parking, resuming, and a complete local eve restart with the Docker backend. Deployed Vercel Sandbox persistence is still unverified.
-3. **The module contract works.** Valid modules produce tool events; invalid modules are rejected before execution.
-4. **The frontend event path works.** `useEveAgent()` receives `render_module` tool calls as session-stream events, even if post-tool narration later fails.
+1. **GPT-5.6 works through AI Gateway.** Streaming was observed with
+   `openai/gpt-5.6-luna`; eve requires the explicit 200,000-token context
+   override.
+2. **Workspace files persist locally.** A sentinel file survived parking,
+   resuming, and a complete local eve restart with the Docker backend.
+3. **The module contract works.** Valid modules produce tool events; invalid
+   modules are rejected before execution.
+4. **The frontend event path works.** `useEveAgent()` receives
+   `render_module` calls as session-stream events even if post-tool narration
+   later fails.
 
-Known development sharp edges include:
+Known development sharp edges include empty post-tool narration, invisible
+invalid-input events, a slow first Docker sandbox open, the Node 24 requirement,
+and Next.js workspace-root confusion when multiple lockfiles exist.
 
-- post-tool narration can occasionally be empty even after a successful tool event;
-- invalid tool input does not create a frontend-visible tool event;
-- the first Docker sandbox open can take roughly 30 seconds;
-- eve officially expects Node 24.x;
-- multiple lockfiles can cause Next.js to infer the wrong workspace root.
+Read [the complete spike report](docs/spike-findings.md) before changing the
+architecture.
 
-Read [the complete spike report](docs/spike-findings.md) before changing the architecture.
-
-## How GPT-5.6 and Codex are used
+## How GPT-5.6, Codex, and Linear are used
 
 ### GPT-5.6
 
-GPT-5.6 supplies the teaching intelligence at both phases:
-
-- during Dean phase, it interprets calibration answers and writes the personalized curriculum files;
-- during Tutor phase, it reads those files and composes learning modules that satisfy the typed schema;
-- after failure, it uses the recorded mistake and recovery strategy to rebuild the concept in a different modality.
-
-GPT-5.6 does **not** own validation or grading. Zod enforces the lesson shape, and deterministic code will compare real execution results with expected output.
+GPT-5.6 supplies the teaching intelligence. It interprets calibration answers,
+writes personalized curriculum files, composes modules that satisfy the typed
+schema, and rebuilds lessons after failure. It does not get to override
+machine-verifiable results.
 
 ### Codex
 
-Codex is the implementation partner for the repository. The workflow is intentionally reviewable:
+Codex is both the repository implementation partner and a subject inside the
+Build a Work Tool track. Repository work follows approved plans, small issue
+contracts, explicit verification, and reviewable commits. Learner-facing Codex
+work remains bounded to controlled artifacts during Build Week.
 
-- product decisions and constraints are written in `docs/`;
-- build phases are executed in small, ordered increments;
-- spike findings are recorded as evidence rather than assumptions;
-- schema and prompt files are treated as explicit contracts;
-- typechecks and human acceptance gates separate each build phase;
-- Git snapshots keep integration changes reviewable.
+### Linear
 
-The Day 1 baseline integrated the verified spike configuration, planning documents, agent prompts, schema correction, and repository rules before feature development began.
+Linear tracks consequential work after the approved project is created. The
+workflow uses a hybrid source of truth:
+
+- the PRD owns product requirements;
+- `docs/plans/` owns approved designs;
+- Linear owns status, dependencies, acceptance criteria, and evidence;
+- GitHub owns implementation history and commits linked to Linear identifiers.
+
+Every build issue must include Intent, Acceptance criteria, Verification
+checklist, Out of scope, and a link to its approved plan. An issue reaches Done
+only after its checklist passes against real evidence.
 
 ## Roadmap
 
-The current build playbook proceeds in human-approved phases:
+The approved rolling-wave roadmap begins with 14 detailed Build Week issue
+contracts:
 
-1. **Day 2 — Renderer and registry:** replace the raw module payload with seven typed React learning components and a safe fallback.
-2. **Day 3 — Full learning loop:** add deterministic SQL grading, curriculum generation, failure adaptation, and file-change capture.
-3. **Day 4 — Demo experience and guardrails:** polish the birth animation and adaptation diff, then add access controls and limits.
-4. **Day 5 — Deployment and submission:** deploy, repeat the persistence test on Vercel, validate clean setup instructions, and prepare the demonstration.
+1. establish the Linear workflow;
+2. generalize track and verification contracts;
+3. build the safe module shell;
+4. implement seven interactive components;
+5. implement deterministic exercise grading;
+6. connect components to grading events;
+7. complete the Data to Decision hero;
+8. build the Codex work-tool secondary track;
+9. build the Executive Communication preview;
+10. implement evidence-driven hero adaptation;
+11. polish the three-track demonstration;
+12. add guardrails and scheduled review;
+13. deploy and verify durability;
+14. validate the submission package.
 
-Future expansion is organized by verifiability:
+Later outcomes cover the domain-neutral compiler, durable learner state,
+verification infrastructure, career paths, authoring tools, integrations,
+expert templates, tutor discovery, and organization-level learning. Each later
+outcome must pass brainstorming and design approval before it becomes
+implementation work.
 
-- **Tier 1:** machine-verifiable skills such as Python, Bash, regex, Git, spreadsheet formulas, and data analysis;
-- **Tier 2:** structurally verifiable subjects such as math, statistics, logic, and grammar drills;
-- **Tier 3:** judgment-graded subjects only with clear labeling that the deterministic grading guarantee no longer applies.
-
-No later phase should begin until the previous phase's acceptance checklist has been confirmed by a human.
+Read the [approved product roadmap and Linear project design](docs/plans/2026-07-16-dean-product-roadmap-design.md)
+for the full issue contracts, dependencies, and evidence requirements.
 
 ## Documentation
 
-- [Product brief and PRD](docs/dean-product-brief-and-prd.md) — the product thesis, audience, scope, requirements, and architecture decisions.
-- [Spike findings](docs/spike-findings.md) — verified Day 1 behavior, limitations, and operational sharp edges.
-- [Build playbook](docs/build-playbook.md) — the ordered implementation prompts and acceptance criteria for Days 2–5.
-- [Agent instructions](agent/instructions.md) — the runtime Dean/Tutor rules.
-- [Curriculum-generation skill](agent/skills/dean-generate-curriculum.md) — the three-question calibration and file-generation sequence.
-- [Adaptation skill](agent/skills/adapt-on-failure.md) — the planned failure-recovery workflow.
+- [Product brief and PRD](docs/dean-product-brief-and-prd.md) — original product
+  rationale, requirements, and architecture decisions.
+- [Approved roadmap design](docs/plans/2026-07-16-dean-product-roadmap-design.md)
+  — current professional-learning direction, Build Week scope, issue contracts,
+  and later roadmap.
+- [Spike findings](docs/spike-findings.md) — verified Day 1 behavior,
+  limitations, and operational sharp edges.
+- [Build playbook](docs/build-playbook.md) — original ordered Build Week prompts
+  and acceptance criteria.
+- [Agent instructions](agent/instructions.md) — current runtime Dean/Tutor rules.
+- [Curriculum-generation skill](agent/skills/dean-generate-curriculum.md) —
+  current calibration and file-generation sequence.
+- [Adaptation skill](agent/skills/adapt-on-failure.md) — failure-recovery rules.
 
 ## Project scope
 
-Dean is currently a hackathon prototype focused on one learner, one SQL curriculum, and a desktop web experience. Authentication, accounts, billing, multiple subjects, community features, and freeform generated UI are intentionally outside the current scope.
+Dean is a Build Week prototype for one learner and a desktop web experience.
+The active milestone delivers three curated professional-learning tracks at
+different depths. Accounts, billing, arbitrary subjects, community features,
+freeform generated UI, and the later professional-learning marketplace remain
+outside the Build Week implementation scope.
