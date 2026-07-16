@@ -19,12 +19,11 @@ The core idea is simple:
 - help learners produce useful professional decisions and artifacts.
 
 > [!IMPORTANT]
-> This repository currently contains the verified **Day 1 foundation** and the
-> approved three-track Build Week plan. The running agent still opens with the
-> SQL calibration flow until the track-routing milestone is implemented. The
-> complete renderer, grading loop, three-track content, adaptation UI, and
-> deployment remain planned work. See [Current status](#current-status) for the
-> exact boundary.
+> This repository contains the verified **Day 1 foundation** and the approved
+> three-track Build Week routing contract. The running agent can select and
+> scaffold exactly those three tracks, but the complete renderer, grading loop,
+> track content, adaptation UI, and deployment remain planned work. See
+> [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
 
@@ -170,8 +169,11 @@ thesis.
 - GPT-5.6 is configured through Vercel AI Gateway as
   `openai/gpt-5.6-luna`.
 - The required `modelContextWindowTokens: 200_000` override is configured.
-- The current SQL foundation instructions and both curriculum skills are
-  installed.
+- The runtime routes exactly the three approved tracks and rejects arbitrary
+  subjects with a locked track chooser.
+- Track choice persists in durable session state, and generated curriculum
+  scaffolds carry the canonical track id and verification tiers.
+- The SQL foundation remains a supporting skill for Data to Decision.
 - The seven-block Zod learning-module schema is defined.
 - `render_module` imports that schema directly as its `inputSchema`.
 - Valid module tool events reach the browser through eve's session stream.
@@ -184,7 +186,6 @@ thesis.
 
 ### Planned but not finished
 
-- The runtime still needs routing for the three curated tracks.
 - The frontend still shows `render_module` input in a raw development view.
 - The seven production learning components are not built.
 - SQL execution and deterministic grading are not wired into the learner UI.
@@ -303,20 +304,17 @@ On other platforms, visit [http://localhost:3000](http://localhost:3000).
 
 ## Smoke test the current baseline
 
-The current runtime still uses the verified SQL calibration prompt. To confirm
-that the agent instructions and curriculum skill load correctly:
+To confirm the curated routing contract:
 
 1. Open a fresh page at `http://localhost:3000`.
-2. Enter `Hi` and submit it.
-3. Confirm that the agent asks:
+2. Enter `Data to Decision` and confirm Dean begins that track's three-question
+   calibration rather than teaching immediately.
+3. In another fresh session, enter an unsupported goal such as `Teach me
+   conversational French`.
+4. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
+   Executive Communication, with no freeform subject option.
 
-   > What do you want to be able to DO with SQL?
-
-4. Confirm that it does not act as a generic assistant or begin teaching
-   immediately.
-
-This expected response will change when the approved three-track routing issue
-is implemented. Stop the server with `Ctrl+C`.
+Stop the server with `Ctrl+C`.
 
 ## Project structure
 
@@ -326,10 +324,13 @@ is implemented. Stop the server with `Ctrl+C`.
 │   ├── agent.ts                         # Model and context configuration
 │   ├── channels/eve.ts                  # Runtime channel authentication
 │   ├── instructions.md                  # Current Dean/Tutor phase rules
+│   ├── lib/learner-session.ts            # Durable selected-track state
 │   ├── skills/
 │   │   ├── adapt-on-failure.md          # Recovery playbook
 │   │   └── dean-generate-curriculum.md  # Calibration and curriculum playbook
-│   └── tools/render_module.ts           # Typed lesson-delivery boundary
+│   └── tools/
+│       ├── render_module.ts              # Typed lesson-delivery boundary
+│       └── select_track.ts               # Approved-track selection boundary
 ├── app/
 │   ├── _components/                     # Learning UI and message rendering
 │   └── page.tsx                         # Main application page
@@ -339,7 +340,9 @@ is implemented. Stop the server with `Ctrl+C`.
 │   ├── dean-product-brief-and-prd.md     # Product brief and requirements
 │   └── spike-findings.md                # Verified platform evidence
 ├── lib/
-│   └── module-spec.ts                   # Schema, parser, fallback, and example
+│   ├── module-spec.ts                   # Schema, parser, fallback, and example
+│   └── track-spec.ts                    # Canonical tracks and verification tiers
+├── tests/track-spec.test.ts             # Track-contract regression tests
 ├── AGENTS.md                            # Repository and Linear workflow rules
 ├── README.md                            # Project overview and setup
 └── package.json                         # Scripts and dependencies
@@ -350,6 +353,7 @@ is implemented. Stop the server with `Ctrl+C`.
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the local web application and eve integration |
+| `npm test` | Run track-contract regression tests |
 | `npm run typecheck` | Run TypeScript validation without emitting files |
 | `npm run build` | Build the Next.js application |
 | `npm run start` | Start a previously built Next.js application |
@@ -362,9 +366,8 @@ is implemented. Stop the server with `Ctrl+C`.
 - **Three curated tracks for Build Week.** The MVP supports Data to Decision,
   Build a Work Tool with Codex, and Executive Communication. Arbitrary subjects
   remain outside the active milestone.
-- **Current runtime truth.** Until track routing ships, the running agent
-  remains the verified SQL foundation rather than pretending to support work
-  that has not been built.
+- **Current runtime truth.** Routing and curriculum scaffolds exist for the
+  three approved tracks; their complete learning content remains unbuilt.
 - **Typed rendering only.** The model emits registry data, never raw generated
   JSX or HTML.
 - **No `dangerouslySetInnerHTML`.** Markdown must not create an HTML injection

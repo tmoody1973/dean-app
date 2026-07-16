@@ -1,54 +1,88 @@
 ---
-description: Use when a new learner starts and /workspace/curriculum.md does not exist. Runs calibration and writes the complete personalized curriculum to the workspace.
+description: Use when a new learner starts and /workspace/curriculum.md does not exist. Selects one approved track, calibrates it, and writes a track-aware curriculum scaffold to the workspace.
 ---
 
 # Dean phase: compile the teacher
 
+This skill routes and scaffolds the three approved Build Week tracks. It does
+not create their full lesson content.
+
+## Step 0 — Resolve the track before calibration
+
+If `/workspace/session.md` already exists, read it and resume that exact track.
+Never select a different track inside the same session.
+
+Otherwise accept only an exact approved track name or the UI's canonical
+message containing one of these ids:
+
+| Track id | Track | Verification tiers |
+| --- | --- | --- |
+| `data-to-decision` | Data to Decision | `machine-verifiable`, `structurally-verifiable` |
+| `build-work-tool-codex` | Build a Work Tool with Codex | `machine-verifiable` |
+| `executive-communication` | Executive Communication | `judgment-supported` |
+
+Call `select_track` with the canonical id. Treat the tool result as the
+authority for the track name and verification tiers copied into workspace
+files.
+
+For an unsupported or ambiguous request, call `ask_question` exactly as the
+global instructions require and stop until the learner chooses. Do not infer a
+track from an arbitrary subject, write any file, or call `render_module`.
+
 ## Step 1 — Calibrate (exactly 3 questions, one message each)
 
-Ask, in order, waiting for each answer:
+Ask the three questions for the selected track, in order, waiting for each
+answer.
 
-1. **Goal:** "What do you want to be able to DO with SQL?" (their words —
-   this shapes every example's subject matter)
-2. **Anchor:** "What do you already work with that involves data —
-   spreadsheets, dashboards, a CRM, code?" (this becomes your analogy
-   engine: e.g., spreadsheets → "a table is a sheet you can't scroll;
-   you have to ask for what you want")
-3. **Reality check:** Show them one simple SELECT statement and ask:
-   "Read this — tell me in a sentence what you think it does." Their
-   answer sets the starting difficulty (intro / core), not their
-   self-assessment.
+### Data to Decision
 
-## Step 2 — Write the curriculum to /workspace (this IS the birth animation)
+1. **Outcome:** "What campaign or business decision do you need your data to support?"
+2. **Anchor:** "What do you already use for this work — spreadsheets, dashboards, a CRM, SQL, or something else?"
+3. **Reality check:** Show one tiny campaign table and ask what comparison they would make first. Use the answer to set `intro` or `core` difficulty.
 
-Write these files with write_file, ONE FILE PER CALL, in this exact order
-(the frontend streams each write as it happens — order is choreography):
+### Build a Work Tool with Codex
 
-1. `/workspace/learner-profile.md` — goal (their words), anchor domain,
-   starting difficulty, the analogy frame you'll use, date.
-2. `/workspace/curriculum.md` — the course map: 4 lessons for v1
-   (SELECT → WHERE → INNER JOIN → GROUP BY), each with: one-line concept,
-   chosen modality for THIS learner, difficulty, status
-   (`pending` / `active` / `passed`), and a `current:` pointer at the top.
-3. `/workspace/lessons/01-select.md` through `04-group-by.md` — one per
-   call. Each lesson file contains: the concept; the teaching plan in the
-   learner's analogy frame; 2–4 planned blocks with their types; the
-   exercise design (setup data, task, expected output rows, 3 hints from
-   gentle to explicit); and the onFailure plan (which alternate modality,
-   how to fold their mistake in).
+1. **Outcome:** "What repetitive work task would you like a small tool to change?"
+2. **Anchor:** "How do you do that task today, and which files or tools are involved?"
+3. **Reality check:** "What observable result would prove the smallest useful tool works?" Use the specificity of the answer to set `intro` or `core` difficulty.
 
-Rules for content:
+### Executive Communication
 
-- Every example's SUBJECT MATTER comes from their stated goal (they said
-  "restaurant sales data" → tables are restaurants and orders, not
-  abstract foo/bar).
-- Every explanation leads with their anchor analogy at least once per
-  lesson.
-- Expected outputs in exercise designs must be exact, literal, and small
-  (≤5 rows) — a human must be able to verify them by eye.
+1. **Outcome:** "Which audience needs a decision or recommendation from you?"
+2. **Anchor:** "What are the stakes, and what context does that audience already have?"
+3. **Reality check:** Ask for the one sentence they would say today. Use its clarity to set `intro` or `core` difficulty; never call the result passed or verified mastery.
 
-## Step 3 — Hand off (one sentence)
+## Step 2 — Write the curriculum scaffold to /workspace
 
-After the last file writes, say one sentence welcoming them to lesson 1,
-then immediately begin Tutor phase: read lesson 01, compose its module,
-call render_module.
+Write these files with `write_file`, ONE FILE PER CALL, in this exact order.
+The frontend streams each write as it happens, so order is choreography.
+
+1. `/workspace/session.md`
+   - `track_id`: canonical id from `select_track`
+   - `track`: exact display name from `select_track`
+   - `verification_tiers`: exact ordered tier list from `select_track`
+   - `phase`: `dean`
+   - `started`: current date
+2. `/workspace/learner-profile.md`
+   - Repeat `track_id`, `track`, and `verification_tiers` exactly.
+   - Record the learner's answers, starting difficulty, analogy frame, and date.
+3. `/workspace/curriculum.md`
+   - Repeat `track_id`, `track`, and `verification_tiers` exactly at the top.
+   - Add `current: 01-preview` and an outcome-level map for the selected track:
+     - Data to Decision: frame the question → retrieve with SQL → interpret a visualization → write a recommendation.
+     - Build a Work Tool with Codex: define the repetitive task → write acceptance criteria → build the smallest useful artifact → verify and explain it.
+     - Executive Communication: identify audience and stakes → practice one leadership scenario → revise against a visible judgment-supported rubric.
+   - Give each map item a one-line outcome, modality, difficulty, and status
+     (`pending` / `active` / `passed`). Do not write polished lesson content.
+4. `/workspace/lessons/01-preview.md`
+   - Repeat `track_id`, `track`, and `verification_tiers` exactly.
+   - State the selected outcome, starting difficulty, analogy frame, and one
+     planned `explain` block that confirms the route. Label it explicitly as a
+     routing preview; later issues own full lesson content.
+
+## Step 3 — Hand off with a routing preview
+
+After the last file writes, call `render_module` with one valid `explain` block
+that names the selected track, shows its verification label, and previews the
+outcome map. This is a routing confirmation, not a full lesson. Then say at
+most one short sentence.

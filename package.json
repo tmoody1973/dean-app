@@ -10,6 +10,7 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
+    "test": "node --test tests/track-spec.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build:eve": "eve build",
     "dev:eve": "eve dev",
