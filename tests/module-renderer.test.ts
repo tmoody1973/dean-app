@@ -49,3 +49,70 @@ test("model-authored HTML remains inert text data", () => {
     hostileText,
   );
 });
+
+test("the two renderer fixtures cover all seven validated block types", () => {
+  const interactionFixture = {
+    id: "renderer-interactions-01",
+    concept: "Interactive component coverage",
+    title: "Try the remaining interaction types",
+    difficulty: "intro",
+    modality: "interactive",
+    blocks: [
+      {
+        type: "parameterSlider",
+        prompt: "Change the number of rows.",
+        language: "sql",
+        codeTemplate: "SELECT * FROM orders LIMIT {{value}}",
+        slider: { label: "Rows", min: 1, max: 10, step: 1, initial: 3 },
+      },
+      {
+        type: "dragMatch",
+        prompt: "Match each clause to its job.",
+        pairs: [
+          { left: "SELECT", right: "chooses columns" },
+          { left: "FROM", right: "chooses a table" },
+          { left: "WHERE", right: "filters rows" },
+        ],
+      },
+      {
+        type: "quiz",
+        question: "Which clause filters rows?",
+        choices: ["SELECT", "FROM", "WHERE"],
+        answerIndex: 2,
+        explanation: "WHERE keeps only rows that meet a condition.",
+      },
+      {
+        type: "revealSequence",
+        title: "A query in two steps",
+        steps: [
+          { heading: "Choose", body: "SELECT identifies the columns." },
+          { heading: "Filter", body: "WHERE narrows the rows." },
+        ],
+      },
+    ],
+    mastery: { required: 2, outOf: 2 },
+    onFailure: {
+      switchToModality: "visual",
+      carryForwardMistake: true,
+    },
+  };
+
+  const parsed = LearningModule.safeParse(interactionFixture);
+
+  assert.equal(parsed.success, true);
+  assert.deepEqual(
+    new Set([
+      ...EXAMPLE_MODULE.blocks.map((block) => block.type),
+      ...(parsed.success ? parsed.data.blocks.map((block) => block.type) : []),
+    ]),
+    new Set([
+      "explain",
+      "codeExercise",
+      "conceptDiagram",
+      "parameterSlider",
+      "dragMatch",
+      "quiz",
+      "revealSequence",
+    ]),
+  );
+});

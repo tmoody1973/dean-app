@@ -22,9 +22,10 @@ The core idea is simple:
 > This repository contains the verified **Day 1 foundation** and the approved
 > three-track Build Week routing contract. The running agent can select and
 > scaffold exactly those three tracks, and validated lessons now render through
-> a safe one-block shell. The interactive component registry, grading loop,
-> track content, adaptation UI, and deployment remain planned work. See [Current
-> status](#current-status) for the exact boundary.
+> a safe one-block shell backed by all seven approved interactive components.
+> Deterministic execution and grading, track content, adaptation UI, and
+> deployment remain planned work. See [Current status](#current-status) for the
+> exact boundary.
 
 ## Table of contents
 
@@ -214,6 +215,11 @@ thesis.
 - Invalid modules are rejected at the tool boundary.
 - The frontend re-validates lesson input, falls back to a safe explanation, and
   presents one block at a time with keyboard navigation and visible progress.
+- The frontend registry renders explanation, code exercise, concept diagram,
+  parameter slider, matching, quiz, and paced-reveal blocks from validated data;
+  it never treats model output as generated JSX.
+- Practice checks give immediate text-and-icon feedback, hints reveal one at a
+  time, and code capture stays explicitly ungraded until execution is connected.
 - Local Docker-backed workspace files survived session parking and a full
   local server restart during the spike.
 - The emergency fallback module satisfies the schema with one explain block.
@@ -222,7 +228,6 @@ thesis.
 
 ### Planned but not finished
 
-- The seven production learning components are not built.
 - SQL execution and deterministic grading are not wired into the learner UI.
 - The complete Data to Decision journey has not passed browser acceptance.
 - The Codex artifact lesson and Executive Communication preview are not built.

@@ -3,14 +3,13 @@
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { BlockRenderer } from "@/components/module/BlockRenderer";
 import { Button } from "@/components/ui/button";
 import {
   parseModule,
   safeFallback,
   type LearningModuleT,
 } from "@/lib/module-spec";
-
-type LearningBlock = LearningModuleT["blocks"][number];
 
 const FALLBACK_CONCEPT = "A simpler explanation";
 const FALLBACK_MARKDOWN =
@@ -38,12 +37,15 @@ export function ModuleRenderer({ input }: { readonly input: unknown }) {
 
 function ModuleShell({ module }: { readonly module: LearningModuleT }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [interactionReady, setInteractionReady] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
   const shouldFocusStep = useRef(false);
   const currentBlock = module.blocks[currentIndex];
   const stepNumber = currentIndex + 1;
   const totalSteps = module.blocks.length;
   const isComplete = stepNumber === totalSteps;
+  const requiresInteraction = requiresInteractionBeforeContinue(currentBlock);
+  const mayContinue = !requiresInteraction || interactionReady;
   const progress = `${(stepNumber / totalSteps) * 100}%`;
   const titleId = useId();
 
@@ -55,9 +57,10 @@ function ModuleShell({ module }: { readonly module: LearningModuleT }) {
   }, [currentIndex]);
 
   const continueLesson = () => {
-    if (isComplete) return;
+    if (isComplete || !mayContinue) return;
 
     shouldFocusStep.current = true;
+    setInteractionReady(false);
     setCurrentIndex((index) => Math.min(index + 1, totalSteps - 1));
   };
 
@@ -117,130 +120,54 @@ function ModuleShell({ module }: { readonly module: LearningModuleT }) {
         ref={stepRef}
         tabIndex={-1}
       >
-        <BlockPreview block={currentBlock} />
+        <BlockRenderer
+          block={currentBlock}
+          onCheckedChange={setInteractionReady}
+          onReadyChange={setInteractionReady}
+        />
       </div>
 
       <footer className="flex border-black/8 border-t px-5 py-4 sm:justify-end sm:px-10 sm:py-5 dark:border-white/10">
-        <Button
-          className="h-11 w-full rounded-xl bg-[#2753c7] px-6 text-white shadow-none hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 sm:w-auto dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
-          disabled={isComplete}
-          onClick={continueLesson}
-          type="button"
-        >
-          {isComplete ? (
-            <>
-              <CheckIcon aria-hidden="true" />
-              Done
-            </>
-          ) : (
-            <>
-              Continue
-              <ArrowRightIcon aria-hidden="true" />
-            </>
-          )}
-        </Button>
+        {mayContinue ? (
+          <Button
+            className="h-11 w-full rounded-xl bg-[#2753c7] px-6 text-white shadow-none hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 sm:w-auto dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            disabled={isComplete}
+            onClick={continueLesson}
+            type="button"
+          >
+            {isComplete ? (
+              <>
+                <CheckIcon aria-hidden="true" />
+                Done
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRightIcon aria-hidden="true" />
+              </>
+            )}
+          </Button>
+        ) : (
+          <p className="w-full text-center text-muted-foreground text-sm sm:text-right">
+            Complete this interaction to continue.
+          </p>
+        )}
       </footer>
     </section>
   );
 }
 
-function BlockPreview({ block }: { readonly block: LearningBlock }) {
-  switch (block.type) {
-    case "explain":
-      return (
-        <div className="max-w-2xl">
-          <p className="mb-4 text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
-            Explanation
-          </p>
-          <p className="whitespace-pre-wrap text-pretty text-lg leading-8 break-words">
-            {block.markdown}
-          </p>
-        </div>
-      );
-    case "conceptDiagram":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Concept map</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.caption}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3" aria-label="Concept nodes">
-            {block.nodes.map((node) => (
-              <span
-                className="rounded-lg border bg-background px-4 py-3 text-sm"
-                key={node.id}
-                title={node.detail}
-              >
-                {node.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      );
-    case "codeExercise":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Code exercise preview</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.prompt}</p>
-          <pre className="mt-6 overflow-x-auto rounded-xl border bg-background p-4 text-sm leading-6">
-            <code>{block.starterCode}</code>
-          </pre>
-        </div>
-      );
-    case "parameterSlider":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Parameter exploration preview</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.prompt}</p>
-          <pre className="mt-6 overflow-x-auto rounded-xl border bg-background p-4 text-sm leading-6">
-            <code>{block.codeTemplate.replaceAll("{{value}}", String(block.slider.initial))}</code>
-          </pre>
-        </div>
-      );
-    case "dragMatch":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Matching exercise preview</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.prompt}</p>
-          <p className="mt-5 text-muted-foreground text-sm">
-            {block.pairs.length} pairs are ready for this activity.
-          </p>
-        </div>
-      );
-    case "quiz":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Knowledge check preview</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.question}</p>
-          <ul className="mt-6 grid gap-2" aria-label="Answer choices">
-            {block.choices.map((choice, index) => (
-              <li className="rounded-lg border bg-background px-4 py-3 text-sm" key={index}>
-                {choice}
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    case "revealSequence":
-      return (
-        <div className="max-w-2xl">
-          <BlockLabel>Sequence preview</BlockLabel>
-          <p className="text-pretty text-lg leading-8">{block.title}</p>
-          <p className="mt-5 font-medium text-sm">{block.steps[0].heading}</p>
-          <p className="mt-2 whitespace-pre-wrap text-muted-foreground leading-7 break-words">
-            {block.steps[0].body}
-          </p>
-        </div>
-      );
-  }
-}
-
-function BlockLabel({ children }: { readonly children: string }) {
-  return (
-    <p className="mb-4 text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
-      {children}
-    </p>
-  );
-}
-
 function moduleRevision(module: LearningModuleT): string {
   return JSON.stringify(module);
+}
+
+function requiresInteractionBeforeContinue(
+  block: LearningModuleT["blocks"][number],
+): boolean {
+  return (
+    block.type === "codeExercise" ||
+    block.type === "dragMatch" ||
+    block.type === "quiz" ||
+    block.type === "revealSequence"
+  );
 }
