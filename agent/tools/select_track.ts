@@ -10,6 +10,7 @@ import {
   learnerSession,
   type SelectedTrack,
 } from "../lib/learner-session";
+import { consumeGenerationAllowance } from "../lib/session-limits";
 
 const selectedTrackSchema = z.object({
   id: TrackIdSchema,
@@ -48,6 +49,19 @@ export default defineTool({
       );
     }
 
+    if (current.selectedTrack !== null) {
+      return {
+        selected: true,
+        sessionId: ctx.session.id,
+        track: current.selectedTrack,
+      };
+    }
+
+    const allowance = consumeGenerationAllowance(current, "curriculum");
+    if (!allowance.allowed) {
+      throw new Error(allowance.message ?? "Curriculum generation is temporarily unavailable.");
+    }
+
     const track: SelectedTrack = {
       id: spec.id,
       name: spec.name,
@@ -56,7 +70,10 @@ export default defineTool({
       verificationTiers: [...spec.verificationTiers],
     };
 
-    learnerSession.update(() => ({ selectedTrack: track }));
+    learnerSession.update(() => ({
+      ...allowance.usage,
+      selectedTrack: track,
+    }));
 
     return {
       selected: true,

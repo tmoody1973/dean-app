@@ -2,8 +2,8 @@
 
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
-import { AlertCircleIcon } from "lucide-react";
-import { Fragment, useMemo, useRef } from "react";
+import { AlertCircleIcon, Clock3Icon, KeyRoundIcon } from "lucide-react";
+import { Fragment, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -17,9 +17,16 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import type { GradeExerciseInput } from "@/lib/grading/contracts";
 import { projectGradeAttempts } from "@/lib/grading/grading-events";
+import {
+  DEMO_ACCESS_REQUIRED,
+  DEMO_ACCESS_STORAGE_KEY,
+  DEMO_PASSCODE_HEADER,
+} from "@/lib/demo-access";
 import { createDemoDisplay } from "@/lib/demo-display";
 import { getTrackSpec, type TrackId } from "@/lib/track-spec";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AgentMessage } from "./agent-message";
 import {
   AdaptationMoment,
@@ -34,7 +41,45 @@ const AGENT_NAME = "dean";
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
 export function AgentChat() {
-  const agent = useEveAgent();
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!DEMO_ACCESS_REQUIRED) return;
+    setAccessCode(window.sessionStorage.getItem(DEMO_ACCESS_STORAGE_KEY));
+  }, []);
+
+  const unlock = (passcode: string) => {
+    const trimmed = passcode.trim();
+    if (trimmed.length === 0) return;
+
+    window.sessionStorage.setItem(DEMO_ACCESS_STORAGE_KEY, trimmed);
+    setAccessCode(trimmed);
+  };
+
+  const lock = () => {
+    window.sessionStorage.removeItem(DEMO_ACCESS_STORAGE_KEY);
+    setAccessCode(null);
+  };
+
+  if (DEMO_ACCESS_REQUIRED && accessCode === null) {
+    return <DemoAccessGate onUnlock={unlock} />;
+  }
+
+  return <LearningSession accessCode={accessCode} onChangePasscode={lock} />;
+}
+
+function LearningSession({
+  accessCode,
+  onChangePasscode,
+}: {
+  readonly accessCode: string | null;
+  readonly onChangePasscode: () => void;
+}) {
+  const agent = useEveAgent({
+    headers: accessCode
+      ? () => ({ [DEMO_PASSCODE_HEADER]: accessCode })
+      : undefined,
+  });
   const completedModuleIds = useRef(new Set<string>());
   const completingModuleIds = useRef(new Set<string>());
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
@@ -133,6 +178,17 @@ export function AgentChat() {
             <div>
               <p className="font-medium">Request failed</p>
               <p className="mt-0.5 text-muted-foreground">{agent.error.message}</p>
+              {DEMO_ACCESS_REQUIRED ? (
+                <Button
+                  className="mt-2"
+                  onClick={onChangePasscode}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Enter a different passcode
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -174,12 +230,87 @@ export function AgentChat() {
         )}
       >
         {isEmpty ? (
-          <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
+          <>
+            <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
+            <ScheduledReviewNotice />
+          </>
         ) : null}
         <div className="w-full">{composer}</div>
         {isEmpty ? <DemoComposerPrompt /> : null}
       </div>
     </main>
+  );
+}
+
+function DemoAccessGate({ onUnlock }: { readonly onUnlock: (passcode: string) => void }) {
+  const [passcode, setPasscode] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (passcode.trim().length === 0) {
+      setMessage("Enter the shared demo passcode to continue.");
+      return;
+    }
+
+    setMessage(null);
+    onUnlock(passcode);
+  };
+
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-background px-4 text-foreground">
+      <form
+        className="w-full max-w-sm space-y-5 rounded-2xl border bg-card p-6 shadow-sm"
+        onSubmit={handleSubmit}
+      >
+        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <KeyRoundIcon aria-hidden="true" className="size-5" />
+        </span>
+        <div>
+          <h1 className="font-semibold text-xl tracking-tight">Dean demo access</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter the shared passcode supplied with this demo.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <label className="font-medium text-sm" htmlFor="dean-demo-passcode">
+            Passcode
+          </label>
+          <Input
+            autoComplete="current-password"
+            id="dean-demo-passcode"
+            onChange={(event) => setPasscode(event.target.value)}
+            type="password"
+            value={passcode}
+          />
+          {message ? <p className="text-sm text-destructive">{message}</p> : null}
+        </div>
+        <Button className="w-full" type="submit">
+          Open Dean
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          The passcode stays only in this browser tab and is sent directly to Dean’s protected session route.
+        </p>
+      </form>
+    </main>
+  );
+}
+
+function ScheduledReviewNotice() {
+  return (
+    <aside
+      className="flex w-full items-start gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-left text-sm"
+      role="status"
+    >
+      <Clock3Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-blue-600" />
+      <div>
+        <p className="font-medium">Review check-in is scheduled</p>
+        <p className="mt-0.5 text-muted-foreground">
+          Eve prepares the same follow-up prompt every 30 minutes. This browser demo does not push into a parked tab, so the schedule is intentionally shown as a triggerable simulation rather than a claimed delivery.
+        </p>
+      </div>
+    </aside>
   );
 }
 

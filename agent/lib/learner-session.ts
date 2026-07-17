@@ -11,10 +11,18 @@ export type SelectedTrack = {
 };
 
 export type LearnerSessionState = {
+  readonly curriculumGenerations: number;
+  readonly generationWindowStartedAt: number | null;
+  readonly moduleGenerations: number;
   readonly selectedTrack: SelectedTrack | null;
 };
 
 export const learnerSession = defineState<LearnerSessionState>(
   "dean.learner-session",
-  () => ({ selectedTrack: null }),
+  () => ({
+    curriculumGenerations: 0,
+    generationWindowStartedAt: null,
+    moduleGenerations: 0,
+    selectedTrack: null,
+  }),
 );

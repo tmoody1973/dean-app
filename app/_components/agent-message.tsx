@@ -142,6 +142,16 @@ function AgentMessagePart({
             className="h-80 w-full animate-pulse rounded-2xl border bg-card/70 motion-reduce:animate-none"
             role="status"
           />
+        ) : part.state === "output-error" ? (
+          <div
+            className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm"
+            role="alert"
+          >
+            <p className="font-medium">Lesson could not be prepared</p>
+            <p className="mt-1 text-muted-foreground">
+              {part.errorText ?? "Please continue with the material already on screen."}
+            </p>
+          </div>
         ) : (
           <ModuleRenderer
             canCompleteModule={canCompleteModule}

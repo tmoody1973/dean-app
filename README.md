@@ -286,13 +286,22 @@ thesis.
   depth and verification labels. During calibration, the workspace becomes an
   animated seven-file curriculum tree; during adaptation, a visible
   `hands-on → interactive` transition shows a readable lesson-file diff.
+- Deployed Eve session routes require a shared `DEAN_DEMO_PASSCODE`; the
+  browser keeps it only for the current tab and sends it as a request header.
+  Local loopback development remains available without a passcode.
+- Each durable session is paced at three curriculum-build requests and 30
+  module renders per hour, with learner-readable limit messages. SQL grading
+  remains capped by an interruptible timeout, row limit, and output-size limit.
+- Eve has a production schedule every 30 minutes for a review check-in. The
+  demo intentionally labels it as a triggerable simulation because a parked
+  browser tab has no push-delivery target.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- Guardrails, scheduled review, deployment, and submission validation remain.
+- Deployment durability and submission validation remain.
 - Workspace persistence has not been verified on deployed Vercel Sandbox.
 
 The repository separates verified behavior from planned product work so that
@@ -380,10 +389,12 @@ Create `.env` in the project root:
 
 ```dotenv
 AI_GATEWAY_API_KEY=replace_with_your_key
+DEAN_DEMO_PASSCODE=choose_a_shared_demo_passcode
 ```
 
 Replace the placeholder with the real value. `.gitignore` covers `.env*`, so
-the local credential must remain untracked.
+the local credentials must remain untracked. Local loopback development does
+not require the passcode; deployed browser sessions do.
 
 ### 4. Start the development server
 
@@ -513,9 +524,17 @@ Stop the server with `Ctrl+C`.
 - **Auditable curriculum.** Runtime curriculum files belong in `/workspace`
   and change through file tools.
 - **Credential hygiene.** `.env` files are ignored and must never be committed.
+- **Public demo access.** Production Eve session routes require the runtime-only
+  `DEAN_DEMO_PASSCODE`; no passcode is built into client assets.
+- **Bounded public use.** A durable session gets three curriculum-build requests
+  and 30 module renders per hour. SQL grading interrupts slow work and rejects
+  oversized output with actionable retry messages.
+- **Honest scheduled review.** Eve prepares a review check-in every 30 minutes.
+  The browser UI labels it as a triggerable simulation until a user-delivery
+  channel is intentionally added.
 
-Public-route access controls, session limits, grading timeouts, and output-size
-caps must pass before deployment.
+Public-route access controls, session limits, grading timeouts, output-size
+caps, and a review trigger have been verified locally before deployment.
 
 ## Verified spike findings
 
