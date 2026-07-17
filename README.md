@@ -120,6 +120,9 @@ engineer the perfect sequence of prompts.
 The Build Week MVP deliberately proves breadth and depth with three curated
 tracks. It does not promise arbitrary “learn anything” behavior.
 
+**Live demo:** [dean-tmoody1973s-projects.vercel.app](https://dean-tmoody1973s-projects.vercel.app)
+— enter the shared demo passcode supplied with the submission materials.
+
 | Track | Build Week depth | Learner outcome | Verification |
 | --- | --- | --- | --- |
 | **Data to Decision** | Complete hero journey | Turn campaign data into a recommendation a director can act on | Machine and structural checks |
