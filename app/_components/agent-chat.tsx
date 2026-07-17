@@ -43,7 +43,10 @@ import {
   DEMO_ACCESS_STORAGE_KEY,
   DEMO_PASSCODE_HEADER,
 } from "@/lib/demo-access";
-import { createDemoDisplay } from "@/lib/demo-display";
+import {
+  createDemoDisplay,
+  type CurriculumRouteItem,
+} from "@/lib/demo-display";
 import { getTrackSpec, type TrackId, type TrackSpec } from "@/lib/track-spec";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -189,6 +192,7 @@ function LearningSession({
           composer={composer}
           error={agent.error?.message ?? null}
           onChangePasscode={onChangePasscode}
+          routeItems={demo.routeItems}
           selectedTrack={selectedTrack}
         >
           <Conversation className="min-h-0 flex-1">
@@ -245,6 +249,7 @@ function LearningWorkspace({
   composer,
   error,
   onChangePasscode,
+  routeItems,
   selectedTrack,
 }: {
   readonly agentStatus: AgentStatus;
@@ -252,10 +257,9 @@ function LearningWorkspace({
   readonly composer: ReactNode;
   readonly error: string | null;
   readonly onChangePasscode: () => void;
+  readonly routeItems: readonly CurriculumRouteItem[];
   readonly selectedTrack: TrackSpec | null;
 }) {
-  const route = getLearningRoute(selectedTrack?.id ?? null);
-
   return (
     <section className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[14rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)_20rem]">
       <aside className="hidden border-r border-rule bg-card/72 px-3 py-4 lg:flex lg:flex-col">
@@ -359,7 +363,7 @@ function LearningWorkspace({
           </h2>
         </div>
         <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
-          {route.map((item) => (
+          {routeItems.map((item) => (
             <li
               className={cn(
                 "rounded-lg border p-3 text-sm",
@@ -423,98 +427,6 @@ function WorkspaceNavItem({
       {label}
     </span>
   );
-}
-
-type RouteItem = {
-  readonly description: string;
-  readonly state: "active" | "done" | "upcoming";
-  readonly title: string;
-};
-
-function getLearningRoute(trackId: TrackId | null): readonly RouteItem[] {
-  if (trackId === "data-to-decision") {
-    return [
-      {
-        description: "Frame the decision and define what evidence matters.",
-        state: "done",
-        title: "Question framing",
-      },
-      {
-        description: "Query the campaign data and pass the machine check.",
-        state: "active",
-        title: "SQL retrieval",
-      },
-      {
-        description:
-          "Read the result and connect it to a visual recommendation.",
-        state: "upcoming",
-        title: "Visualization interpretation",
-      },
-      {
-        description: "Write the director-ready recommendation.",
-        state: "upcoming",
-        title: "Recommendation artifact",
-      },
-    ];
-  }
-
-  if (trackId === "build-work-tool-codex") {
-    return [
-      {
-        description: "Define the repetitive task and acceptance criteria.",
-        state: "done",
-        title: "Tool intent",
-      },
-      {
-        description: "Build the small tested Codex work tool.",
-        state: "active",
-        title: "Implementation and tests",
-      },
-      {
-        description: "Run fixed artifact checks for proof of skill.",
-        state: "upcoming",
-        title: "Artifact verification",
-      },
-      {
-        description: "Explain what changed and what evidence proves it.",
-        state: "upcoming",
-        title: "Learner explanation",
-      },
-    ];
-  }
-
-  if (trackId === "executive-communication") {
-    return [
-      {
-        description: "Identify audience, stakes, and decision needed.",
-        state: "done",
-        title: "Audience calibration",
-      },
-      {
-        description: "Draft a concise leadership recommendation.",
-        state: "active",
-        title: "Recommendation draft",
-      },
-      {
-        description: "Compare revisions against the rubric.",
-        state: "upcoming",
-        title: "Judgment check",
-      },
-      {
-        description: "Save the final communication preview.",
-        state: "upcoming",
-        title: "Final artifact",
-      },
-    ];
-  }
-
-  return [
-    {
-      description: "Dean turns your goal into a visible route.",
-      state: "active",
-      title: "Tutor route",
-    },
-  ];
 }
 
 function DemoAccessGate({

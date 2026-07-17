@@ -19,10 +19,17 @@ export type AdaptationDisplay = {
   readonly messageIndex: number;
 };
 
+export type CurriculumRouteItem = {
+  readonly description: string;
+  readonly state: "active" | "done" | "upcoming";
+  readonly title: string;
+};
+
 export type DemoDisplay = {
   readonly adaptation: AdaptationDisplay | null;
   readonly birthMessageIndex: number | null;
   readonly birthWrites: readonly WorkspaceWrite[];
+  readonly routeItems: readonly CurriculumRouteItem[];
   readonly selectedTrackId: TrackId | null;
 };
 
@@ -34,12 +41,14 @@ const ADAPTED_LESSON_PATH = "/workspace/revisions/02-sql-retrieval/adapted.md";
 export function createDemoDisplay(messages: readonly unknown[]): DemoDisplay {
   const writes = collectWorkspaceWrites(messages);
   const birthWrites = writes.slice(0, MAX_BIRTH_WRITES);
+  const selectedTrackId = findSelectedTrack(messages);
 
   return {
     adaptation: createAdaptationDisplay(writes),
     birthMessageIndex: birthWrites[0]?.messageIndex ?? null,
     birthWrites,
-    selectedTrackId: findSelectedTrack(messages),
+    routeItems: createCurriculumRoute(writes, selectedTrackId),
+    selectedTrackId,
   };
 }
 
@@ -81,6 +90,191 @@ export function createAdaptationDisplay(
     diff: lessonDiff(original.content, adapted.content),
     messageIndex: adapted.messageIndex,
   };
+}
+
+export function createCurriculumRoute(
+  writes: readonly WorkspaceWrite[],
+  selectedTrackId: TrackId | null,
+): readonly CurriculumRouteItem[] {
+  const current = findLatestCurriculumCurrent(writes);
+  const trackId =
+    selectedTrackId ??
+    findLatestCurriculumTrackId(writes) ??
+    inferTrackFromCurrent(current);
+  const route = getBaseLearningRoute(trackId);
+  if (route.length === 0) return [];
+
+  if (current === "complete") {
+    return route.map(({ currentIds: _currentIds, ...item }) => ({
+      ...item,
+      state: "done",
+    }));
+  }
+
+  const activeIndex = route.findIndex((item) => item.currentIds.includes(current ?? ""));
+  const resolvedActiveIndex = activeIndex >= 0 ? activeIndex : 0;
+
+  return route.map(({ currentIds: _currentIds, ...item }, index) => ({
+    ...item,
+    state:
+      index < resolvedActiveIndex
+        ? "done"
+        : index === resolvedActiveIndex
+          ? "active"
+          : "upcoming",
+  }));
+}
+
+type BaseRouteItem = Omit<CurriculumRouteItem, "state"> & {
+  readonly currentIds: readonly string[];
+};
+
+function getBaseLearningRoute(
+  trackId: TrackId | null,
+): readonly BaseRouteItem[] {
+  if (trackId === "data-to-decision") {
+    return [
+      {
+        currentIds: ["01-question-framing"],
+        description: "Frame the decision and define what evidence matters.",
+        title: "Question framing",
+      },
+      {
+        currentIds: ["02-sql-retrieval"],
+        description: "Query the campaign data and pass the machine check.",
+        title: "SQL retrieval",
+      },
+      {
+        currentIds: ["03-visualization-interpretation"],
+        description:
+          "Read the result and connect it to a visual recommendation.",
+        title: "Visualization interpretation",
+      },
+      {
+        currentIds: ["04-decision-ready-recommendation"],
+        description: "Prepare the recommendation structure.",
+        title: "Decision-ready recommendation",
+      },
+      {
+        currentIds: ["recommendation-artifact"],
+        description: "Save the director-ready recommendation artifact.",
+        title: "Recommendation artifact",
+      },
+    ];
+  }
+
+  if (trackId === "build-work-tool-codex") {
+    return [
+      {
+        currentIds: ["codex-work-tool-01"],
+        description: "Define, build, and verify the smallest useful work tool.",
+        title: "Implementation and tests",
+      },
+      {
+        currentIds: ["learner-explanation"],
+        description: "Explain what the tool handles and what proves it works.",
+        title: "Learner explanation",
+      },
+    ];
+  }
+
+  if (trackId === "executive-communication") {
+    return [
+      {
+        currentIds: ["executive-update-01"],
+        description: "Review the scenario and visible leadership rubric.",
+        title: "Scenario and rubric",
+      },
+      {
+        currentIds: ["awaiting-attempt-1"],
+        description: "Draft the first leadership recommendation in chat.",
+        title: "First recommendation",
+      },
+      {
+        currentIds: ["awaiting-revision-2"],
+        description: "Revise the recommendation using the same scenario facts.",
+        title: "Rubric-guided revision",
+      },
+      {
+        currentIds: ["executive-comparison-01"],
+        description: "Compare observable wording changes between both drafts.",
+        title: "Revision comparison",
+      },
+    ];
+  }
+
+  return [
+    {
+      currentIds: [""],
+      description: "Dean turns your goal into a visible route.",
+      title: "Tutor route",
+    },
+  ];
+}
+
+function findLatestCurriculumCurrent(
+  writes: readonly WorkspaceWrite[],
+): string | null {
+  for (let index = writes.length - 1; index >= 0; index -= 1) {
+    const write = writes[index];
+    if (write.path === "/workspace/curriculum.md") {
+      return findYamlValue(write.content, "current");
+    }
+  }
+
+  return null;
+}
+
+function findLatestCurriculumTrackId(
+  writes: readonly WorkspaceWrite[],
+): TrackId | null {
+  for (let index = writes.length - 1; index >= 0; index -= 1) {
+    const write = writes[index];
+    if (write.path !== "/workspace/curriculum.md") continue;
+
+    const trackId = findYamlValue(write.content, "track_id");
+    if (isTrackId(trackId)) return trackId;
+  }
+
+  return null;
+}
+
+function inferTrackFromCurrent(current: string | null): TrackId | null {
+  if (current === null) return null;
+  if (
+    [
+      "01-question-framing",
+      "02-sql-retrieval",
+      "03-visualization-interpretation",
+      "04-decision-ready-recommendation",
+      "recommendation-artifact",
+    ].includes(current)
+  ) {
+    return "data-to-decision";
+  }
+  if (["codex-work-tool-01", "learner-explanation"].includes(current)) {
+    return "build-work-tool-codex";
+  }
+  if (
+    [
+      "executive-update-01",
+      "awaiting-attempt-1",
+      "awaiting-revision-2",
+      "executive-comparison-01",
+    ].includes(current)
+  ) {
+    return "executive-communication";
+  }
+
+  return null;
+}
+
+function isTrackId(value: string | null): value is TrackId {
+  return (
+    value === "data-to-decision" ||
+    value === "build-work-tool-codex" ||
+    value === "executive-communication"
+  );
 }
 
 export function lessonDiff(before: string, after: string): readonly LessonDiffLine[] {
