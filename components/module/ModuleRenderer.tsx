@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowRightIcon, CheckIcon, LoaderCircleIcon, RotateCcwIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  LoaderCircleIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { BlockRenderer } from "@/components/module/BlockRenderer";
@@ -131,13 +136,13 @@ function ModuleShell({
   return (
     <section
       aria-labelledby={titleId}
-      className="my-2 w-full overflow-hidden rounded-2xl border border-black/8 bg-card text-card-foreground shadow-[0_18px_60px_-38px_rgba(15,23,42,0.45)] dark:border-white/10"
+      className="my-2 w-full overflow-hidden rounded-xl border border-rule bg-card text-card-foreground"
       data-module-id={module.id}
       data-testid="module-shell"
     >
       <div className="px-5 pt-5 sm:px-10 sm:pt-9">
         <div className="flex items-center justify-between gap-4 text-xs">
-          <span className="font-semibold tracking-[0.18em] text-[#2753c7] uppercase dark:text-[#8aabff]">
+          <span className="font-semibold tracking-[0.18em] text-primary uppercase">
             Lesson
           </span>
           <span
@@ -154,11 +159,11 @@ function ModuleShell({
           aria-valuemax={totalSteps}
           aria-valuemin={1}
           aria-valuenow={stepNumber}
-          className="mt-3 h-0.5 overflow-hidden rounded-full bg-black/8 dark:bg-white/12"
+          className="mt-3 h-0.5 overflow-hidden rounded-full bg-muted"
           role="progressbar"
         >
           <div
-            className="h-full rounded-full bg-[#2753c7] transition-[width] duration-150 ease-out motion-reduce:transition-none dark:bg-[#8aabff]"
+            className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out motion-reduce:transition-none"
             data-testid="module-progress-fill"
             style={{ width: progress }}
           />
@@ -196,10 +201,10 @@ function ModuleShell({
         />
       </div>
 
-      <footer className="flex flex-col gap-2 border-black/8 border-t px-5 py-4 sm:items-end sm:px-10 sm:py-5 dark:border-white/10">
+      <footer className="flex flex-col gap-2 border-rule border-t bg-background/45 px-5 py-4 sm:items-end sm:px-10 sm:py-5">
         {mayContinue ? (
           <Button
-            className="h-11 w-full rounded-xl bg-[#2753c7] px-6 text-white shadow-none hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 sm:w-auto dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            className="h-11 w-full rounded-lg px-6 shadow-none sm:w-auto"
             disabled={
               isComplete &&
               (!canCompleteModule ||

@@ -6,15 +6,15 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type ExplainBlockData = Extract<
   LearningModuleT["blocks"][number],
-  { type: "explain" }
+  { type: "explain"; }
 >;
 
-export function ExplainBlock({ block }: { readonly block: ExplainBlockData }) {
+export function ExplainBlock({ block }: { readonly block: ExplainBlockData; }) {
   const paragraphs = block.markdown.split(/\n{2,}/);
 
   return (
     <article className="max-w-2xl" aria-label="Explanation">
-      <p className="mb-5 text-xs font-semibold tracking-[0.14em] text-[#2753c7] uppercase dark:text-[#8aabff]">
+      <p className="mb-5 text-xs font-semibold tracking-[0.14em] text-primary uppercase">
         Explanation
       </p>
       <div className="space-y-5 text-pretty text-lg leading-8 text-foreground">
@@ -51,7 +51,7 @@ function renderInline(value: string, lineIndex: number): ReactNode[] {
     if (token.startsWith("`") && token.endsWith("`")) {
       return (
         <code
-          className="rounded-md border border-black/8 bg-black/[0.035] px-1.5 py-0.5 font-mono text-[0.88em] dark:border-white/10 dark:bg-white/[0.06]"
+          className="rounded-md border border-rule bg-muted/45 px-1.5 py-0.5 font-mono text-[0.88em]"
           key={key}
         >
           {token.slice(1, -1)}

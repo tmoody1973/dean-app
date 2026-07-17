@@ -9,7 +9,7 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type DragMatch = Extract<
   LearningModuleT["blocks"][number],
-  { type: "dragMatch" }
+  { type: "dragMatch"; }
 >;
 
 type DragMatchBlockProps = {
@@ -17,9 +17,12 @@ type DragMatchBlockProps = {
   readonly onCheckedChange: (checked: boolean) => void;
 };
 
-export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) {
-  const [assignments, setAssignments] = useState<readonly (number | null)[]>(() =>
-    block.pairs.map(() => null),
+export function DragMatchBlock({
+  block,
+  onCheckedChange,
+}: DragMatchBlockProps) {
+  const [assignments, setAssignments] = useState<readonly (number | null)[]>(
+    () => block.pairs.map(() => null),
   );
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
@@ -71,7 +74,8 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
         Choose an item on the left, then choose its match on the right.
       </p>
       <p className="mt-2 text-muted-foreground text-sm">
-        Required criterion: every declared relationship must match before you can continue.
+        Required criterion: every declared relationship must match before you
+        can continue.
       </p>
 
       <div
@@ -87,7 +91,7 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
               <div className="space-y-1.5" key={leftIndex}>
                 <button
                   aria-pressed={selectedLeft === leftIndex}
-                  className="min-h-11 w-full rounded-xl border bg-background px-3 py-2.5 text-left text-sm outline-none transition-[border-color,box-shadow,background-color] hover:border-[#2753c7]/50 focus-visible:border-[#2753c7] focus-visible:ring-[3px] focus-visible:ring-[#2753c7]/25 disabled:cursor-default disabled:opacity-80 motion-reduce:transition-none dark:hover:border-[#8aabff]/60 dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/30"
+                  className="min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-left text-sm outline-none transition-[border-color,box-shadow,background-color] hover:border-primary/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 disabled:cursor-default disabled:opacity-80 motion-reduce:transition-none"
                   disabled={checked}
                   onClick={() => setSelectedLeft(leftIndex)}
                   type="button"
@@ -102,7 +106,10 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
                 {checked ? (
                   <span className="flex items-center gap-1.5 text-xs">
                     {resultIsCorrect ? (
-                      <CheckCircleIcon aria-hidden="true" className="size-3.5" />
+                      <CheckCircleIcon
+                        aria-hidden="true"
+                        className="size-3.5"
+                      />
                     ) : (
                       <CircleXIcon aria-hidden="true" className="size-3.5" />
                     )}
@@ -125,7 +132,7 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
               <button
                 aria-label={`${block.pairs[rightIndex].right}${isAssigned ? ", already matched" : ""}`}
                 aria-pressed={isAssigned}
-                className="min-h-11 w-full rounded-xl border bg-background px-3 py-2.5 text-left text-sm outline-none transition-[border-color,box-shadow,background-color] hover:border-[#2753c7]/50 focus-visible:border-[#2753c7] focus-visible:ring-[3px] focus-visible:ring-[#2753c7]/25 disabled:cursor-default disabled:opacity-80 motion-reduce:transition-none aria-pressed:border-[#2753c7]/55 aria-pressed:bg-[#2753c7]/5 dark:hover:border-[#8aabff]/60 dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/30 dark:aria-pressed:border-[#8aabff]/60 dark:aria-pressed:bg-[#8aabff]/8"
+                className="min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-left text-sm outline-none transition-[border-color,box-shadow,background-color] hover:border-primary/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 disabled:cursor-default disabled:opacity-80 motion-reduce:transition-none aria-pressed:border-primary/55 aria-pressed:bg-primary/5"
                 disabled={checked || selectedLeft === null}
                 key={rightIndex}
                 onClick={() => chooseRight(rightIndex)}
@@ -147,7 +154,7 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
       {!checked ? (
         <div className="mt-6">
           <Button
-            className="h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            className="h-11 rounded-lg bg-primary px-6 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
             disabled={!relationshipCheck.complete}
             onClick={checkMatches}
             type="button"
@@ -161,16 +168,26 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
           ) : null}
         </div>
       ) : (
-        <div className="mt-6 rounded-xl border bg-muted/40 p-4" role="status">
+        <div
+          className="mt-6 rounded-lg border border-rule bg-muted/45 p-4"
+          role="status"
+        >
           <div className="flex gap-3 text-sm leading-6">
             {relationshipCheck.satisfied ? (
-              <CheckCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <CheckCircleIcon
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
             ) : (
-              <CircleXIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <CircleXIcon
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
             )}
             <div>
               <p className="font-medium">
-                Relationship check: {relationshipCheck.correctCount} of {relationshipCheck.requiredCount} required matches correct.
+                Relationship check: {relationshipCheck.correctCount} of{" "}
+                {relationshipCheck.requiredCount} required matches correct.
               </p>
               <p className="text-muted-foreground">
                 {relationshipCheck.satisfied
@@ -178,7 +195,8 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
                   : "All declared relationships are required to continue."}
               </p>
               <p className="mt-1 text-muted-foreground text-xs">
-                This structural check does not judge broader semantic correctness.
+                This structural check does not judge broader semantic
+                correctness.
               </p>
               <Button
                 className="mt-2 h-auto px-0 py-1"

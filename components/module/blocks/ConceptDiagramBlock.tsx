@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 type ConceptDiagramBlockData = Extract<
   LearningModuleT["blocks"][number],
-  { type: "conceptDiagram" }
+  { type: "conceptDiagram"; }
 >;
 
 export function ConceptDiagramBlock({
@@ -43,7 +43,9 @@ export function ConceptDiagramBlock({
 
   return (
     <figure className="max-w-2xl">
-      <figcaption className="text-pretty text-lg leading-8">{block.caption}</figcaption>
+      <figcaption className="text-pretty text-lg leading-8">
+        {block.caption}
+      </figcaption>
 
       <ul className="mt-7 grid gap-3 sm:grid-cols-2" aria-label="Concepts">
         {block.nodes.map((node, index) => {
@@ -52,7 +54,7 @@ export function ConceptDiagramBlock({
 
           return (
             <li
-              className="overflow-hidden rounded-xl border border-black/8 bg-background dark:border-white/10"
+              className="overflow-hidden rounded-lg border border-rule bg-background"
               key={`${node.id}:${index}`}
             >
               {node.detail ? (
@@ -60,7 +62,7 @@ export function ConceptDiagramBlock({
                   <button
                     aria-controls={detailId}
                     aria-expanded={isExpanded}
-                    className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left font-medium outline-none transition-colors hover:bg-black/[0.025] focus-visible:ring-3 focus-visible:ring-[#2753c7]/35 dark:hover:bg-white/[0.04] dark:focus-visible:ring-[#8aabff]/40"
+                    className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left font-medium outline-none transition-colors hover:bg-accent/45 focus-visible:ring-3 focus-visible:ring-ring/30"
                     onClick={() => toggleNode(index)}
                     type="button"
                   >
@@ -68,14 +70,14 @@ export function ConceptDiagramBlock({
                     <ChevronDownIcon
                       aria-hidden="true"
                       className={cn(
-                        "size-4 shrink-0 text-[#2753c7] transition-transform dark:text-[#8aabff]",
+                        "size-4 shrink-0 text-primary transition-transform ",
                         isExpanded && "rotate-180",
                       )}
                     />
                   </button>
                   {isExpanded ? (
                     <p
-                      className="border-black/8 border-t px-4 py-3 text-sm leading-6 text-muted-foreground dark:border-white/10"
+                      className="border-rule border-t px-4 py-3 text-sm leading-6 text-muted-foreground"
                       id={detailId}
                     >
                       {node.detail}
@@ -83,7 +85,9 @@ export function ConceptDiagramBlock({
                   ) : null}
                 </>
               ) : (
-                <p className="flex min-h-11 items-center px-4 py-3 font-medium">{node.label}</p>
+                <p className="flex min-h-11 items-center px-4 py-3 font-medium">
+                  {node.label}
+                </p>
               )}
             </li>
           );
@@ -91,21 +95,25 @@ export function ConceptDiagramBlock({
       </ul>
 
       {block.edges.length > 0 ? (
-        <div className="mt-8 border-black/8 border-t pt-6 dark:border-white/10">
+        <div className="mt-8 border-rule border-t pt-6">
           <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
             Connections
           </p>
           <ul className="mt-3 space-y-2" aria-label="Connections">
             {block.edges.map((edge, index) => (
               <li
-                className="flex min-h-11 items-center gap-2 rounded-lg bg-black/[0.025] px-4 py-2.5 text-sm dark:bg-white/[0.04]"
+                className="flex min-h-11 items-center gap-2 rounded-lg bg-muted/35 px-4 py-2.5 text-sm"
                 key={`${edge.from}:${edge.to}:${index}`}
               >
-                <span className="font-medium">{labelsById.get(edge.from) ?? edge.from}</span>
-                <span aria-hidden="true" className="text-[#2753c7] dark:text-[#8aabff]">
+                <span className="font-medium">
+                  {labelsById.get(edge.from) ?? edge.from}
+                </span>
+                <span aria-hidden="true" className="text-primary">
                   →
                 </span>
-                <span className="font-medium">{labelsById.get(edge.to) ?? edge.to}</span>
+                <span className="font-medium">
+                  {labelsById.get(edge.to) ?? edge.to}
+                </span>
                 {edge.label ? (
                   <span className="text-muted-foreground">— {edge.label}</span>
                 ) : null}

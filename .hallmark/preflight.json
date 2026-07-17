@@ -1,0 +1,26 @@
+{
+  "verb": "redesign",
+  "approved": true,
+  "approvedBy": "user",
+  "approvedAt": "2026-07-17",
+  "genre": "modern-minimal",
+  "theme": "cobalt-workbench",
+  "framework": "Next.js app router",
+  "fontStack": ["Geist", "Geist Mono"],
+  "routes": ["app/page.tsx"],
+  "primaryFiles": [
+    "app/globals.css",
+    "app/_components/agent-chat.tsx",
+    "app/_components/demo-moments.tsx",
+    "app/_components/agent-message.tsx",
+    "components/module/ModuleRenderer.tsx",
+    "components/module/blocks/*.tsx"
+  ],
+  "guardrails": [
+    "No product behavior changes",
+    "No routing changes",
+    "No Eve agent changes",
+    "No passcode or secret changes",
+    "No file deletions"
+  ]
+}

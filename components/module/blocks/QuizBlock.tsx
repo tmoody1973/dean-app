@@ -6,10 +6,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { LearningModuleT } from "@/lib/module-spec";
 
-type Quiz = Extract<
-  LearningModuleT["blocks"][number],
-  { type: "quiz" }
->;
+type Quiz = Extract<LearningModuleT["blocks"][number], { type: "quiz"; }>;
 
 type QuizBlockProps = {
   readonly block: Quiz;
@@ -45,20 +42,22 @@ export function QuizBlock({ block, onCheckedChange }: QuizBlockProps) {
       </p>
 
       <fieldset aria-describedby={checked ? feedbackId : undefined}>
-        <legend className="text-pretty text-lg leading-8">{block.question}</legend>
+        <legend className="text-pretty text-lg leading-8">
+          {block.question}
+        </legend>
         <div className="mt-6 space-y-3">
           {block.choices.map((choice, index) => {
             const choiceId = `${groupName}-${index}`;
 
             return (
               <label
-                className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border bg-background px-4 py-3 text-sm leading-6 outline-none transition-[border-color,box-shadow,background-color] has-[:checked]:border-[#2753c7]/60 has-[:checked]:bg-[#2753c7]/5 has-[:focus-visible]:border-[#2753c7] has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-[#2753c7]/25 has-[:disabled]:cursor-default has-[:disabled]:opacity-80 motion-reduce:transition-none dark:has-[:checked]:border-[#8aabff]/60 dark:has-[:checked]:bg-[#8aabff]/8 dark:has-[:focus-visible]:border-[#8aabff] dark:has-[:focus-visible]:ring-[#8aabff]/30"
+                className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border border-input bg-background px-4 py-3 text-sm leading-6 outline-none transition-[border-color,box-shadow,background-color] has-[:checked]:border-primary/60 has-[:checked]:bg-primary/5 has-[:focus-visible]:border-ring has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/30 has-[:disabled]:cursor-default has-[:disabled]:opacity-80 motion-reduce:transition-none"
                 htmlFor={choiceId}
                 key={index}
               >
                 <input
                   checked={selectedIndex === index}
-                  className="mt-1 size-4 shrink-0 accent-[#2753c7] dark:accent-[#8aabff]"
+                  className="mt-1 size-4 shrink-0 accent-primary"
                   disabled={checked}
                   id={choiceId}
                   name={groupName}
@@ -74,7 +73,10 @@ export function QuizBlock({ block, onCheckedChange }: QuizBlockProps) {
       </fieldset>
 
       {block.answerIndex >= block.choices.length ? (
-        <p className="mt-4 rounded-xl border bg-muted/40 p-4 text-sm" role="status">
+        <p
+          className="mt-4 rounded-lg border border-rule bg-muted/45 p-4 text-sm"
+          role="status"
+        >
           This practice question cannot be checked yet.
         </p>
       ) : null}
@@ -82,7 +84,7 @@ export function QuizBlock({ block, onCheckedChange }: QuizBlockProps) {
       {!checked ? (
         <div className="mt-6">
           <Button
-            className="h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            className="h-11 rounded-lg bg-primary px-6 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
             disabled={!canCheck}
             onClick={checkAnswer}
             type="button"
@@ -92,15 +94,21 @@ export function QuizBlock({ block, onCheckedChange }: QuizBlockProps) {
         </div>
       ) : (
         <div
-          className="mt-6 rounded-xl border bg-muted/40 p-4"
+          className="mt-6 rounded-lg border border-rule bg-muted/45 p-4"
           id={feedbackId}
           role="status"
         >
           <div className="flex gap-3 text-sm leading-6">
             {isCorrect ? (
-              <CheckCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <CheckCircleIcon
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
             ) : (
-              <CircleXIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <CircleXIcon
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0"
+              />
             )}
             <div>
               <p className="font-medium">

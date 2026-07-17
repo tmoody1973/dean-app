@@ -15,8 +15,16 @@ import {
   LoaderCircleIcon,
   XCircleIcon,
 } from "lucide-react";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
-import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
 import {
   Tool,
   ToolContent,
@@ -36,7 +44,7 @@ export type AgentInputResponse = {
   readonly text?: string;
 };
 
-type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
+type EveFilePart = Extract<EveMessagePart, { type: "file"; }>;
 
 export function AgentMessage({
   canCompleteModule,
@@ -56,7 +64,9 @@ export function AgentMessage({
   readonly isStreaming: boolean;
   readonly message: EveMessage;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[],
+  ) => void | Promise<void>;
   readonly onModuleComplete: (moduleId: string) => Promise<void>;
 }) {
   const lastTextIndex = message.parts.reduce(
@@ -81,7 +91,11 @@ export function AgentMessage({
             onInputResponses={onInputResponses}
             onModuleComplete={onModuleComplete}
             part={part}
-            showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
+            showCaret={
+              isStreaming &&
+              message.role === "assistant" &&
+              index === lastTextIndex
+            }
           />
         ))}
       </MessageContent>
@@ -105,7 +119,9 @@ function AgentMessagePart({
   readonly canSubmitExercise: boolean;
   readonly gradeAttempts: GradeAttemptProjection;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[],
+  ) => void | Promise<void>;
   readonly onModuleComplete: (moduleId: string) => Promise<void>;
   readonly part: EveMessagePart;
   readonly showCaret: boolean;
@@ -139,7 +155,7 @@ function AgentMessagePart({
         return part.state === "input-streaming" ? (
           <div
             aria-label="Preparing lesson"
-            className="h-80 w-full animate-pulse rounded-2xl border bg-card/70 motion-reduce:animate-none"
+            className="h-80 w-full animate-pulse rounded-xl border border-rule bg-card/70 motion-reduce:animate-none"
             role="status"
           />
         ) : part.state === "output-error" ? (
@@ -149,7 +165,8 @@ function AgentMessagePart({
           >
             <p className="font-medium">Lesson could not be prepared</p>
             <p className="mt-1 text-muted-foreground">
-              {part.errorText ?? "Please continue with the material already on screen."}
+              {part.errorText ??
+                "Please continue with the material already on screen."}
             </p>
           </div>
         ) : (
@@ -170,7 +187,10 @@ function AgentMessagePart({
 
       return (
         <Tool
-          defaultOpen={part.state === "approval-requested" || part.state === "approval-responded"}
+          defaultOpen={
+            part.state === "approval-requested" ||
+            part.state === "approval-responded"
+          }
         >
           <ToolHeader
             state={part.state}
@@ -192,7 +212,7 @@ function AgentMessagePart({
   }
 }
 
-function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart }) {
+function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart; }) {
   const file = safeWorkspaceFile(part.input);
   const state = workspaceWriteState(part.state);
   const Icon =
@@ -208,10 +228,10 @@ function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart }) {
       className={cn(
         "flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm",
         state.kind === "completed"
-          ? "border-emerald-500/25 bg-emerald-500/5"
+          ? "border-success/25 bg-success/5"
           : state.kind === "error"
             ? "border-destructive/25 bg-destructive/5"
-            : "border-blue-500/25 bg-blue-500/5",
+            : "border-primary/25 bg-primary/5",
       )}
       data-testid="workspace-file-write"
       role="status"
@@ -221,7 +241,10 @@ function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{file.basename}</span>
-        <code className="block truncate text-muted-foreground text-xs" title={file.path}>
+        <code
+          className="block truncate text-muted-foreground text-xs"
+          title={file.path}
+        >
           {file.path}
         </code>
       </span>
@@ -229,17 +252,18 @@ function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart }) {
         className={cn(
           "flex shrink-0 items-center gap-1.5 text-xs",
           state.kind === "completed"
-            ? "text-emerald-700 dark:text-emerald-300"
+            ? "text-success"
             : state.kind === "error"
               ? "text-destructive"
-              : "text-blue-700 dark:text-blue-300",
+              : "text-primary",
         )}
       >
         <Icon
           aria-hidden="true"
           className={cn(
             "size-3.5",
-            state.kind === "streaming" && "animate-spin motion-reduce:animate-none",
+            state.kind === "streaming" &&
+            "animate-spin motion-reduce:animate-none",
           )}
         />
         {state.label}
@@ -291,7 +315,8 @@ function workspaceWriteState(state: EveDynamicToolPart["state"]): {
   readonly kind: "streaming" | "completed" | "error";
   readonly label: string;
 } {
-  if (state === "output-available") return { kind: "completed", label: "Written" };
+  if (state === "output-available")
+    return { kind: "completed", label: "Written" };
   if (state === "output-error" || state === "output-denied") {
     return { kind: "error", label: "Write failed" };
   }
@@ -302,15 +327,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function AttachmentPart({ part }: { readonly part: EveFilePart }) {
+function AttachmentPart({ part }: { readonly part: EveFilePart; }) {
   const label = part.filename ?? "Attachment";
-  const detail = [part.mediaType, formatBytes(part.size)].filter(Boolean).join(" - ");
+  const detail = [part.mediaType, formatBytes(part.size)]
+    .filter(Boolean)
+    .join(" - ");
   const isImage = part.mediaType.startsWith("image/") && part.url !== undefined;
   const Icon = isImage ? ImageIcon : FileIcon;
   const body = (
     <span className="flex max-w-sm items-center gap-3 rounded-md border bg-background/60 p-2 text-sm">
       {isImage ? (
-        <img alt={label} className="size-12 shrink-0 rounded-sm object-cover" src={part.url} />
+        <img
+          alt={label}
+          className="size-12 shrink-0 rounded-sm object-cover"
+          src={part.url}
+        />
       ) : (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-muted text-muted-foreground">
           <Icon className="size-4" />
@@ -318,9 +349,13 @@ function AttachmentPart({ part }: { readonly part: EveFilePart }) {
       )}
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{label}</span>
-        {detail ? <span className="block truncate text-muted-foreground">{detail}</span> : null}
+        {detail ? (
+          <span className="block truncate text-muted-foreground">{detail}</span>
+        ) : null}
       </span>
-      {part.url ? <ExternalLinkIcon className="size-4 shrink-0 text-muted-foreground" /> : null}
+      {part.url ? (
+        <ExternalLinkIcon className="size-4 shrink-0 text-muted-foreground" />
+      ) : null}
     </span>
   );
 
@@ -333,22 +368,32 @@ function AttachmentPart({ part }: { readonly part: EveFilePart }) {
   );
 }
 
-function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) {
-  const isAuthorized = part.state === "completed" && part.outcome === "authorized";
+function AuthorizationPrompt({
+  part,
+}: {
+  readonly part: EveAuthorizationPart;
+}) {
+  const isAuthorized =
+    part.state === "completed" && part.outcome === "authorized";
   const isCompleted = part.state === "completed";
-  const Icon = isAuthorized ? CheckCircleIcon : isCompleted ? XCircleIcon : KeyRoundIcon;
+  const Icon = isAuthorized
+    ? CheckCircleIcon
+    : isCompleted
+      ? XCircleIcon
+      : KeyRoundIcon;
   const instructions = part.authorization?.instructions;
-  const shouldShowInstructions = instructions !== undefined && instructions !== part.description;
+  const shouldShowInstructions =
+    instructions !== undefined && instructions !== part.description;
 
   return (
     <div
       className={cn(
         "space-y-3 rounded-md border p-3",
         isAuthorized
-          ? "border-emerald-500/30 bg-emerald-500/5"
+          ? "border-success/30 bg-success/5"
           : isCompleted
             ? "border-destructive/30 bg-destructive/5"
-            : "border-blue-500/30 bg-blue-500/5",
+            : "border-primary/30 bg-primary/5",
       )}
     >
       <div className="flex items-start gap-3">
@@ -356,17 +401,19 @@ function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) 
           className={cn(
             "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
             isAuthorized
-              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              ? "bg-success/10 text-success"
               : isCompleted
                 ? "bg-destructive/10 text-destructive"
-                : "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+                : "bg-primary/10 text-primary",
           )}
         >
           <Icon className="size-4" />
         </span>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="font-medium text-sm">{authorizationTitle(part)}</p>
-          <p className="text-muted-foreground text-sm">{authorizationDescription(part)}</p>
+          <p className="text-muted-foreground text-sm">
+            {authorizationDescription(part)}
+          </p>
           {shouldShowInstructions ? (
             <p className="text-muted-foreground text-sm">{instructions}</p>
           ) : null}
@@ -413,7 +460,9 @@ function authorizationDescription(part: EveAuthorizationPart): string {
   return `${part.displayName} authorization ${formatAuthorizationOutcome(part.outcome)}${tail}.`;
 }
 
-function formatAuthorizationOutcome(outcome: NonNullable<EveAuthorizationPart["outcome"]>): string {
+function formatAuthorizationOutcome(
+  outcome: NonNullable<EveAuthorizationPart["outcome"]>,
+): string {
   switch (outcome) {
     case "authorized":
       return "authorized";
@@ -445,7 +494,9 @@ function InputRequestActions({
   part,
 }: {
   readonly canRespond: boolean;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[],
+  ) => void | Promise<void>;
   readonly part: EveDynamicToolPart;
 }) {
   const inputRequest = part.toolMetadata?.eve?.inputRequest;
@@ -459,11 +510,14 @@ function InputRequestActions({
   );
 
   return (
-    <div className="space-y-3 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-3">
+    <div className="space-y-3 rounded-md border border-warning/30 bg-warning/10 p-3">
       <p className="text-muted-foreground text-sm">{inputRequest.prompt}</p>
       {inputResponse ? (
         <p className="font-medium text-sm">
-          Responded: {selectedOption?.label ?? inputResponse.text ?? inputResponse.optionId}
+          Responded:{" "}
+          {selectedOption?.label ??
+            inputResponse.text ??
+            inputResponse.optionId}
         </p>
       ) : (
         <div className="flex flex-wrap gap-2">

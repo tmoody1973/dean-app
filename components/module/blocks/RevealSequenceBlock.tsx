@@ -8,7 +8,7 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type RevealSequenceBlockData = Extract<
   LearningModuleT["blocks"][number],
-  { type: "revealSequence" }
+  { type: "revealSequence"; }
 >;
 
 export function RevealSequenceBlock({
@@ -45,7 +45,10 @@ export function RevealSequenceBlock({
   return (
     <section className="max-w-2xl" aria-labelledby={`${headingId}-title`}>
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-pretty text-lg font-semibold leading-8" id={`${headingId}-title`}>
+        <h2
+          className="text-pretty text-lg font-semibold leading-8"
+          id={`${headingId}-title`}
+        >
           {block.title}
         </h2>
         <p
@@ -56,9 +59,9 @@ export function RevealSequenceBlock({
         </p>
       </div>
 
-      <article className="mt-7 rounded-xl border border-black/8 bg-background p-5 sm:p-6 dark:border-white/10">
+      <article className="mt-7 rounded-lg border border-rule bg-background p-5 sm:p-6">
         <h3
-          className="scroll-m-4 text-pretty font-semibold text-xl leading-8 outline-none focus-visible:rounded-md focus-visible:ring-3 focus-visible:ring-[#2753c7]/35 dark:focus-visible:ring-[#8aabff]/40"
+          className="scroll-m-4 text-pretty font-semibold text-xl leading-8 outline-none focus-visible:rounded-md focus-visible:ring-3 focus-visible:ring-ring/30"
           id={headingId}
           ref={headingRef}
           tabIndex={-1}
@@ -69,7 +72,7 @@ export function RevealSequenceBlock({
           {step.body}
         </p>
         {step.code ? (
-          <pre className="mt-5 overflow-x-auto rounded-lg border border-black/8 bg-black/[0.025] p-4 font-mono text-sm leading-6 dark:border-white/10 dark:bg-white/[0.04]">
+          <pre className="mt-5 overflow-x-auto rounded-lg border border-rule bg-muted/45 p-4 font-mono text-sm leading-6">
             <code>{step.code}</code>
           </pre>
         ) : null}
@@ -77,7 +80,7 @@ export function RevealSequenceBlock({
 
       <div className="mt-5 flex items-center justify-between gap-3">
         <Button
-          className="h-11 rounded-xl px-4"
+          className="h-11 rounded-lg px-4"
           disabled={isFirst}
           onClick={() => moveTo(Math.max(0, currentIndex - 1))}
           type="button"
@@ -87,14 +90,16 @@ export function RevealSequenceBlock({
           Previous
         </Button>
         {isFinal ? (
-          <p className="flex min-h-11 items-center gap-2 text-sm font-medium text-[#2753c7] dark:text-[#8aabff]">
+          <p className="flex min-h-11 items-center gap-2 text-sm font-medium text-primary">
             <CheckIcon aria-hidden="true" className="size-4" />
             All parts viewed
           </p>
         ) : (
           <Button
-            className="h-11 rounded-xl bg-[#2753c7] px-5 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
-            onClick={() => moveTo(Math.min(block.steps.length - 1, currentIndex + 1))}
+            className="h-11 rounded-lg bg-primary px-5 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
+            onClick={() =>
+              moveTo(Math.min(block.steps.length - 1, currentIndex + 1))
+            }
             type="button"
           >
             Next

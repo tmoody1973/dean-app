@@ -3,7 +3,14 @@
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
 import { AlertCircleIcon, Clock3Icon, KeyRoundIcon } from "lucide-react";
-import { Fragment, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Conversation,
   ConversationContent,
@@ -88,7 +95,10 @@ function LearningSession({
     () => projectGradeAttempts(agent.events),
     [agent.events],
   );
-  const demo = useMemo(() => createDemoDisplay(agent.data.messages), [agent.data.messages]);
+  const demo = useMemo(
+    () => createDemoDisplay(agent.data.messages),
+    [agent.data.messages],
+  );
   const selectedTrack = getTrackSpec(demo.selectedTrackId);
 
   const handleExerciseSubmit = async (submission: GradeExerciseInput) => {
@@ -162,9 +172,11 @@ function LearningSession({
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       {isEmpty ? null : (
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-black/5 border-b px-4 sm:px-6 dark:border-white/8">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-rule bg-background/82 px-4 backdrop-blur sm:px-6">
           <span className="flex min-w-0 items-center gap-2">
-            <span className="font-semibold text-sm tracking-[-0.02em]">{AGENT_NAME}</span>
+            <span className="font-semibold text-sm tracking-[-0.02em] uppercase">
+              {AGENT_NAME}
+            </span>
             <StatusDot status={agent.status} />
           </span>
           {selectedTrack ? <TrackSignal track={selectedTrack} /> : null}
@@ -172,12 +184,14 @@ function LearningSession({
       )}
 
       {agent.error ? (
-        <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-2 sm:px-6">
-          <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm">
+        <div className="mx-auto w-full max-w-4xl shrink-0 px-4 pt-3 sm:px-6">
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2.5 text-sm">
             <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
             <div>
               <p className="font-medium">Request failed</p>
-              <p className="mt-0.5 text-muted-foreground">{agent.error.message}</p>
+              <p className="mt-0.5 text-muted-foreground">
+                {agent.error.message}
+              </p>
               {DEMO_ACCESS_REQUIRED ? (
                 <Button
                   className="mt-2"
@@ -196,22 +210,29 @@ function LearningSession({
 
       {isEmpty ? null : (
         <Conversation className="min-h-0 flex-1">
-          <ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-4 py-6 sm:px-6">
+          <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-6">
             {agent.data.messages.map((message, index) => (
               <Fragment key={message.id}>
-                {demo.birthMessageIndex === index ? <CurriculumBirth writes={demo.birthWrites} /> : null}
-                {demo.adaptation?.messageIndex === index ? <AdaptationMoment adaptation={demo.adaptation} /> : null}
+                {demo.birthMessageIndex === index ? (
+                  <CurriculumBirth writes={demo.birthWrites} />
+                ) : null}
+                {demo.adaptation?.messageIndex === index ? (
+                  <AdaptationMoment adaptation={demo.adaptation} />
+                ) : null}
                 <AgentMessage
                   canRespond={!isBusy}
                   canCompleteModule={!isBusy}
                   canSubmitExercise={!isBusy}
                   gradeAttempts={gradeAttempts}
                   isStreaming={
-                    agent.status === "streaming" && index === agent.data.messages.length - 1
+                    agent.status === "streaming" &&
+                    index === agent.data.messages.length - 1
                   }
                   message={message}
                   onExerciseSubmit={handleExerciseSubmit}
-                  onInputResponses={(inputResponses) => agent.send({ inputResponses })}
+                  onInputResponses={(inputResponses) =>
+                    agent.send({ inputResponses })
+                  }
                   onModuleComplete={handleModuleComplete}
                 />
               </Fragment>
@@ -225,8 +246,8 @@ function LearningSession({
         className={cn(
           "mx-auto w-full px-4 sm:px-6",
           isEmpty
-            ? "flex max-w-xl flex-1 flex-col items-center justify-center gap-8 pb-[10vh]"
-            : "max-w-3xl shrink-0 pb-6",
+            ? "flex max-w-6xl flex-1 flex-col items-center justify-center gap-6 py-8 sm:py-12"
+            : "max-w-4xl shrink-0 pb-6",
         )}
       >
         {isEmpty ? (
@@ -242,7 +263,11 @@ function LearningSession({
   );
 }
 
-function DemoAccessGate({ onUnlock }: { readonly onUnlock: (passcode: string) => void }) {
+function DemoAccessGate({
+  onUnlock,
+}: {
+  readonly onUnlock: (passcode: string) => void;
+}) {
   const [passcode, setPasscode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -261,14 +286,16 @@ function DemoAccessGate({ onUnlock }: { readonly onUnlock: (passcode: string) =>
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 text-foreground">
       <form
-        className="w-full max-w-sm space-y-5 rounded-2xl border bg-card p-6 shadow-sm"
+        className="w-full max-w-sm space-y-5 rounded-xl border border-rule bg-card p-6"
         onSubmit={handleSubmit}
       >
-        <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <KeyRoundIcon aria-hidden="true" className="size-5" />
         </span>
         <div>
-          <h1 className="font-semibold text-xl tracking-tight">Dean demo access</h1>
+          <h1 className="font-semibold text-xl tracking-tight">
+            Dean demo access
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Enter the shared passcode supplied with this demo.
           </p>
@@ -284,13 +311,16 @@ function DemoAccessGate({ onUnlock }: { readonly onUnlock: (passcode: string) =>
             type="password"
             value={passcode}
           />
-          {message ? <p className="text-sm text-destructive">{message}</p> : null}
+          {message ? (
+            <p className="text-sm text-destructive">{message}</p>
+          ) : null}
         </div>
         <Button className="w-full" type="submit">
           Open Dean
         </Button>
         <p className="text-xs text-muted-foreground">
-          The passcode stays only in this browser tab and is sent directly to Dean’s protected session route.
+          The passcode stays only in this browser tab and is sent directly to
+          Dean’s protected session route.
         </p>
       </form>
     </main>
@@ -300,27 +330,32 @@ function DemoAccessGate({ onUnlock }: { readonly onUnlock: (passcode: string) =>
 function ScheduledReviewNotice() {
   return (
     <aside
-      className="flex w-full items-start gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-left text-sm"
+      className="flex w-full max-w-3xl items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-left text-sm"
       role="status"
     >
-      <Clock3Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-blue-600" />
+      <Clock3Icon
+        aria-hidden="true"
+        className="mt-0.5 size-4 shrink-0 text-primary"
+      />
       <div>
         <p className="font-medium">Review check-in is scheduled</p>
         <p className="mt-0.5 text-muted-foreground">
-          Eve prepares the same follow-up prompt every 30 minutes. This browser demo does not push into a parked tab, so the schedule is intentionally shown as a triggerable simulation rather than a claimed delivery.
+          Eve prepares the same follow-up prompt every 30 minutes. This browser
+          demo does not push into a parked tab, so the schedule is intentionally
+          shown as a triggerable simulation rather than a claimed delivery.
         </p>
       </div>
     </aside>
   );
 }
 
-function StatusDot({ status }: { readonly status: AgentStatus }) {
+function StatusDot({ status }: { readonly status: AgentStatus; }) {
   const isLive = status === "submitted" || status === "streaming";
   const tone =
     status === "error"
       ? "bg-destructive"
       : isLive
-        ? "bg-emerald-500"
+        ? "bg-success"
         : status === "ready"
           ? "bg-muted-foreground"
           : "bg-muted-foreground/50";
@@ -335,7 +370,12 @@ function StatusDot({ status }: { readonly status: AgentStatus }) {
           )}
         />
       ) : null}
-      <span className={cn("relative inline-flex size-1 rounded-full transition-colors", tone)} />
+      <span
+        className={cn(
+          "relative inline-flex size-1 rounded-full transition-colors",
+          tone,
+        )}
+      />
     </span>
   );
 }

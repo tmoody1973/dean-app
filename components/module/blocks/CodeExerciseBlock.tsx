@@ -21,7 +21,7 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type CodeExercise = Extract<
   LearningModuleT["blocks"][number],
-  { type: "codeExercise" }
+  { type: "codeExercise"; }
 >;
 
 type CodeExerciseBlockProps = {
@@ -89,12 +89,8 @@ function SqlCodeExercise({
   const result = attempt?.status === "completed" ? attempt.result : null;
   const verifiedPass = result?.error === null && result.passed;
   const deterministicFail = result?.error === null && !result.passed;
-  const isSending =
-    activeAttempt !== null && !sendSettled && !sendFailed;
-  const isWaiting =
-    isSending &&
-    result === null &&
-    attempt?.status !== "error";
+  const isSending = activeAttempt !== null && !sendSettled && !sendFailed;
+  const isWaiting = isSending && result === null && attempt?.status !== "error";
   const retryMessage = getRetryMessage({
     activeAttempt,
     attempt,
@@ -102,7 +98,8 @@ function SqlCodeExercise({
     sendFailed,
     sendSettled,
   });
-  const canCheck = code.trim().length > 0 && canSubmit && activeAttempt === null;
+  const canCheck =
+    code.trim().length > 0 && canSubmit && activeAttempt === null;
 
   useEffect(() => {
     onCheckedChange(verifiedPass === true);
@@ -164,7 +161,7 @@ function SqlCodeExercise({
         <EditorLabel block={block} editorId={editorId} />
         <textarea
           aria-describedby={activeAttempt ? feedbackId : undefined}
-          className="min-h-56 w-full resize-y rounded-xl border bg-background p-4 font-mono text-sm leading-6 outline-none transition-[border-color,box-shadow] focus-visible:border-[#2753c7] focus-visible:ring-[3px] focus-visible:ring-[#2753c7]/25 disabled:cursor-wait disabled:opacity-75 motion-reduce:transition-none dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/30"
+          className="min-h-56 w-full resize-y rounded-lg border border-input bg-background p-4 font-mono text-sm leading-6 outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 disabled:cursor-wait disabled:opacity-75 motion-reduce:transition-none"
           disabled={isSending}
           id={editorId}
           onChange={(event) => {
@@ -181,7 +178,7 @@ function SqlCodeExercise({
       {activeAttempt === null ? (
         <div className="mt-6">
           <Button
-            className="h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            className="h-11 rounded-lg bg-primary px-6 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
             disabled={!canCheck}
             onClick={() => void checkCode()}
             type="button"
@@ -194,13 +191,18 @@ function SqlCodeExercise({
       {activeAttempt ? (
         <div
           aria-live="polite"
-          className="mt-5 rounded-xl border bg-muted/40 p-4"
+          className="mt-5 rounded-lg border border-rule bg-muted/45 p-4"
           id={feedbackId}
           role="status"
         >
           {isWaiting ? (
             <FeedbackLine
-              icon={<LoaderCircleIcon aria-hidden="true" className="size-4 animate-spin" />}
+              icon={
+                <LoaderCircleIcon
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
+              }
               title="Checking your SQL with the deterministic grader…"
             />
           ) : verifiedPass ? (
@@ -225,7 +227,10 @@ function SqlCodeExercise({
               expectedOutput={result?.expectedOutput}
               icon={<AlertCircleIcon aria-hidden="true" className="size-4" />}
               onRetry={clearAttempt}
-              title={retryMessage ?? "No verified result was returned. Your code is still here."}
+              title={
+                retryMessage ??
+                "No verified result was returned. Your code is still here."
+              }
             />
           )}
         </div>
@@ -262,8 +267,7 @@ function ArtifactCodeExercise({
       result.error.code === "CRITERIA_MISMATCH" ||
       result.error.code === "NONZERO_EXIT");
   const isSending = activeAttempt !== null && !sendSettled && !sendFailed;
-  const isWaiting =
-    isSending && result === null && attempt?.status !== "error";
+  const isWaiting = isSending && result === null && attempt?.status !== "error";
   const retryMessage = getArtifactRetryMessage({
     activeAttempt,
     attempt,
@@ -322,7 +326,7 @@ function ArtifactCodeExercise({
   return (
     <div
       aria-describedby={activeAttempt ? feedbackId : undefined}
-      className="max-w-2xl rounded-2xl border bg-muted/20 p-5 sm:p-6"
+      className="max-w-2xl rounded-xl border border-rule bg-muted/25 p-5 sm:p-6"
       data-testid="artifact-verification-card"
     >
       <p className="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
@@ -334,7 +338,10 @@ function ArtifactCodeExercise({
         criteria.
       </p>
 
-      <ul className="mt-5 space-y-2" aria-label="Artifact verification criteria">
+      <ul
+        className="mt-5 space-y-2"
+        aria-label="Artifact verification criteria"
+      >
         {ARTIFACT_CRITERIA.map((criterion) => (
           <li className="flex items-center gap-2.5 text-sm" key={criterion}>
             <ArtifactCriterionIcon state={state} />
@@ -345,7 +352,7 @@ function ArtifactCodeExercise({
 
       {activeAttempt === null ? (
         <Button
-          className="mt-6 h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+          className="mt-6 h-11 rounded-lg bg-primary px-6 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
           disabled={!canRunChecks}
           onClick={() => void runArtifactChecks()}
           type="button"
@@ -355,13 +362,18 @@ function ArtifactCodeExercise({
       ) : (
         <div
           aria-live="polite"
-          className="mt-6 rounded-xl border bg-background/70 p-4"
+          className="mt-6 rounded-lg border border-rule bg-background/70 p-4"
           id={feedbackId}
           role="status"
         >
           {isWaiting ? (
             <FeedbackLine
-              icon={<LoaderCircleIcon aria-hidden="true" className="size-4 animate-spin" />}
+              icon={
+                <LoaderCircleIcon
+                  aria-hidden="true"
+                  className="size-4 animate-spin"
+                />
+              }
               title="Running the fixed artifact checks…"
             />
           ) : verifiedPass ? (
@@ -400,7 +412,7 @@ function ArtifactCriterionIcon({
     return (
       <CheckCircleIcon
         aria-hidden="true"
-        className="size-4 shrink-0 text-emerald-600"
+        className="size-4 shrink-0 text-success"
       />
     );
   }
@@ -424,7 +436,7 @@ function ArtifactCriterionIcon({
     return (
       <AlertCircleIcon
         aria-hidden="true"
-        className="size-4 shrink-0 text-amber-600"
+        className="size-4 shrink-0 text-warning"
       />
     );
   }
@@ -516,7 +528,7 @@ function UnverifiedCodeExercise({
         <EditorLabel block={block} editorId={editorId} />
         <textarea
           aria-describedby={captured ? feedbackId : undefined}
-          className="min-h-56 w-full resize-y rounded-xl border bg-background p-4 font-mono text-sm leading-6 outline-none transition-[border-color,box-shadow] focus-visible:border-[#2753c7] focus-visible:ring-[3px] focus-visible:ring-[#2753c7]/25 motion-reduce:transition-none dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/30"
+          className="min-h-56 w-full resize-y rounded-lg border border-input bg-background p-4 font-mono text-sm leading-6 outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 motion-reduce:transition-none"
           id={editorId}
           onChange={(event) => {
             setCode(event.target.value);
@@ -532,7 +544,7 @@ function UnverifiedCodeExercise({
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {!captured ? (
           <Button
-            className="h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+            className="h-11 rounded-lg bg-primary px-6 text-primary-foreground hover:bg-primary/90 focus-visible:border-ring focus-visible:ring-ring/40"
             disabled={!canCheck}
             onClick={() => {
               setCaptured(true);
@@ -547,7 +559,9 @@ function UnverifiedCodeExercise({
           <Button
             className="h-11"
             onClick={() =>
-              setVisibleHintCount((count) => Math.min(count + 1, block.hints.length))
+              setVisibleHintCount((count) =>
+                Math.min(count + 1, block.hints.length),
+              )
             }
             type="button"
             variant="ghost"
@@ -558,12 +572,21 @@ function UnverifiedCodeExercise({
       </div>
 
       {captured ? (
-        <div className="mt-5 rounded-xl border bg-muted/40 p-4" id={feedbackId} role="status">
+        <div
+          className="mt-5 rounded-lg border border-rule bg-muted/45 p-4"
+          id={feedbackId}
+          role="status"
+        >
           <FeedbackLine
             icon={<InfoIcon aria-hidden="true" className="size-4" />}
             title="Code captured. Deterministic verification is not connected for this language yet."
           />
-          <Button className="mt-2 h-auto px-0 py-1" onClick={resetCapture} type="button" variant="link">
+          <Button
+            className="mt-2 h-auto px-0 py-1"
+            onClick={resetCapture}
+            type="button"
+            variant="link"
+          >
             Edit code
           </Button>
         </div>
@@ -572,7 +595,7 @@ function UnverifiedCodeExercise({
   );
 }
 
-function ExerciseHeading({ block }: { readonly block: CodeExercise }) {
+function ExerciseHeading({ block }: { readonly block: CodeExercise; }) {
   return (
     <>
       <p className="mb-4 text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
@@ -583,13 +606,21 @@ function ExerciseHeading({ block }: { readonly block: CodeExercise }) {
   );
 }
 
-function EditorLabel({ block, editorId }: { readonly block: CodeExercise; readonly editorId: string }) {
+function EditorLabel({
+  block,
+  editorId,
+}: {
+  readonly block: CodeExercise;
+  readonly editorId: string;
+}) {
   return (
     <div className="mb-2 flex items-center justify-between gap-4">
       <label className="font-medium text-sm" htmlFor={editorId}>
         Your {block.language} code
       </label>
-      <span className="text-muted-foreground text-xs uppercase">{block.language}</span>
+      <span className="text-muted-foreground text-xs uppercase">
+        {block.language}
+      </span>
     </div>
   );
 }
@@ -608,11 +639,17 @@ function HintList({
       <ol className="mt-5 space-y-3" data-testid="code-hints">
         {block.hints.slice(0, visibleHintCount).map((hint, index) => (
           <li
-            className="flex gap-3 rounded-xl border border-[#2753c7]/20 bg-[#2753c7]/5 p-4 text-sm leading-6 dark:border-[#8aabff]/25 dark:bg-[#8aabff]/8"
+            className="flex gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm leading-6"
             key={index}
           >
-            <LightbulbIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#2753c7] dark:text-[#8aabff]" />
-            <span><span className="font-medium">Hint {index + 1}: </span>{hint}</span>
+            <LightbulbIcon
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-primary"
+            />
+            <span>
+              <span className="font-medium">Hint {index + 1}: </span>
+              {hint}
+            </span>
           </li>
         ))}
       </ol>
@@ -623,10 +660,16 @@ function HintList({
   );
 }
 
-function FeedbackLine({ icon, title }: { readonly icon: ReactNode; readonly title: string }) {
+function FeedbackLine({
+  icon,
+  title,
+}: {
+  readonly icon: ReactNode;
+  readonly title: string;
+}) {
   return (
     <div className="flex items-start gap-3 text-sm leading-6">
-      <span className="mt-0.5 shrink-0 text-[#2753c7] dark:text-[#8aabff]">{icon}</span>
+      <span className="mt-0.5 shrink-0 text-primary">{icon}</span>
       <p className="font-medium">{title}</p>
     </div>
   );
@@ -650,12 +693,23 @@ function ResultFeedback({
       <FeedbackLine icon={icon} title={title} />
       {actualOutput !== undefined || expectedOutput !== undefined ? (
         <details className="mt-3">
-          <summary className="cursor-pointer font-medium">Verification details</summary>
-          {actualOutput !== undefined ? <OutputValue label="Actual output" value={actualOutput} /> : null}
-          {expectedOutput !== undefined ? <OutputValue label="Expected output" value={expectedOutput} /> : null}
+          <summary className="cursor-pointer font-medium">
+            Verification details
+          </summary>
+          {actualOutput !== undefined ? (
+            <OutputValue label="Actual output" value={actualOutput} />
+          ) : null}
+          {expectedOutput !== undefined ? (
+            <OutputValue label="Expected output" value={expectedOutput} />
+          ) : null}
         </details>
       ) : null}
-      <Button className="mt-2 h-auto px-0 py-1" onClick={onRetry} type="button" variant="link">
+      <Button
+        className="mt-2 h-auto px-0 py-1"
+        onClick={onRetry}
+        type="button"
+        variant="link"
+      >
         <RotateCcwIcon aria-hidden="true" />
         Edit and retry
       </Button>
@@ -663,11 +717,19 @@ function ResultFeedback({
   );
 }
 
-function OutputValue({ label, value }: { readonly label: string; readonly value: string }) {
+function OutputValue({
+  label,
+  value,
+}: {
+  readonly label: string;
+  readonly value: string;
+}) {
   return (
     <div className="mt-2">
-      <p className="text-xs font-semibold text-muted-foreground uppercase">{label}</p>
-      <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg border bg-background p-3 font-mono text-xs">
+      <p className="text-xs font-semibold text-muted-foreground uppercase">
+        {label}
+      </p>
+      <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-rule bg-background p-3 font-mono text-xs">
         {value || "(empty)"}
       </pre>
     </div>
@@ -689,9 +751,15 @@ function getRetryMessage({
 }): string | null {
   if (result?.error) return result.error.message;
   if (attempt?.status === "error") {
-    return attempt.protocolError?.message ?? "The grader could not complete this attempt.";
+    return (
+      attempt.protocolError?.message ??
+      "The grader could not complete this attempt."
+    );
   }
-  if (activeAttempt !== null && (sendFailed || (sendSettled && attempt === undefined))) {
+  if (
+    activeAttempt !== null &&
+    (sendFailed || (sendSettled && attempt === undefined))
+  ) {
     return "No matching grader result was returned. Your code is still here.";
   }
   if (activeAttempt !== null && sendSettled && attempt?.status === "pending") {

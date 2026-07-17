@@ -6,7 +6,7 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type ParameterSliderBlockData = Extract<
   LearningModuleT["blocks"][number],
-  { type: "parameterSlider" }
+  { type: "parameterSlider"; }
 >;
 
 export function ParameterSliderBlock({
@@ -26,7 +26,10 @@ export function ParameterSliderBlock({
     block.slider.initial >= block.slider.min &&
     block.slider.initial <= block.slider.max;
   const displayedValue = boundsAreCoherent ? value : block.slider.initial;
-  const preview = block.codeTemplate.replaceAll("{{value}}", String(displayedValue));
+  const preview = block.codeTemplate.replaceAll(
+    "{{value}}",
+    String(displayedValue),
+  );
 
   return (
     <section className="max-w-2xl" aria-labelledby={`${sliderId}-prompt`}>
@@ -35,13 +38,13 @@ export function ParameterSliderBlock({
       </p>
 
       {boundsAreCoherent ? (
-        <div className="mt-7 rounded-xl border border-black/8 bg-background p-5 dark:border-white/10">
+        <div className="mt-7 rounded-lg border border-rule bg-background p-5">
           <div className="flex items-center justify-between gap-4">
             <label className="font-medium" htmlFor={sliderId}>
               {block.slider.label}
             </label>
             <output
-              className="min-w-16 rounded-lg bg-[#2753c7]/8 px-3 py-1.5 text-center font-mono font-semibold text-[#2753c7] tabular-nums dark:bg-[#8aabff]/12 dark:text-[#8aabff]"
+              className="min-w-16 rounded-lg bg-primary/10 px-3 py-1.5 text-center font-mono font-semibold text-primary tabular-nums"
               htmlFor={sliderId}
             >
               {value}
@@ -49,7 +52,7 @@ export function ParameterSliderBlock({
           </div>
           <input
             aria-valuetext={`${block.slider.label}: ${value}`}
-            className="mt-4 h-11 w-full cursor-pointer accent-[#2753c7] dark:accent-[#8aabff]"
+            className="mt-4 h-11 w-full cursor-pointer accent-primary"
             id={sliderId}
             max={block.slider.max}
             min={block.slider.min}
@@ -65,7 +68,7 @@ export function ParameterSliderBlock({
         </div>
       ) : (
         <p
-          className="mt-7 rounded-xl border border-black/8 bg-black/[0.025] px-4 py-3 text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.04]"
+          className="mt-7 rounded-lg border border-rule bg-muted/45 px-4 py-3 text-sm text-muted-foreground"
           role="status"
         >
           This parameter control is unavailable because its range is incomplete.
@@ -77,7 +80,7 @@ export function ParameterSliderBlock({
           <span>{block.language} preview</span>
           <span>Not executed</span>
         </div>
-        <pre className="mt-2 overflow-x-auto rounded-xl border border-black/8 bg-black/[0.025] p-4 font-mono text-sm leading-6 dark:border-white/10 dark:bg-white/[0.04]">
+        <pre className="mt-2 overflow-x-auto rounded-lg border border-rule bg-muted/45 p-4 font-mono text-sm leading-6">
           <code>{preview}</code>
         </pre>
         <p className="mt-2 text-sm text-muted-foreground">
