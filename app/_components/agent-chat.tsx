@@ -2,10 +2,24 @@
 
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
-import { AlertCircleIcon, Clock3Icon, KeyRoundIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  BookOpenIcon,
+  CheckCircle2Icon,
+  CircleIcon,
+  Clock3Icon,
+  GraduationCapIcon,
+  KeyRoundIcon,
+  LibraryIcon,
+  MessageCircleIcon,
+  PlusIcon,
+  RouteIcon,
+  UserIcon,
+} from "lucide-react";
 import {
   Fragment,
   type FormEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -30,7 +44,7 @@ import {
   DEMO_PASSCODE_HEADER,
 } from "@/lib/demo-access";
 import { createDemoDisplay } from "@/lib/demo-display";
-import { getTrackSpec, type TrackId } from "@/lib/track-spec";
+import { getTrackSpec, type TrackId, type TrackSpec } from "@/lib/track-spec";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +56,6 @@ import {
   TrackPicker,
   TrackSignal,
 } from "./demo-moments";
-
-const AGENT_NAME = "dean";
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
@@ -164,7 +176,7 @@ function LearningSession({
 
   const composer = (
     <PromptInput onSubmit={handleSubmit}>
-      <PromptInputTextarea placeholder="Send a message…" />
+      <PromptInputTextarea placeholder="Ask Dean to explain, quiz, adapt, or continue…" />
       <PromptInputSubmit onStop={agent.stop} status={agent.status} />
     </PromptInput>
   );
@@ -172,95 +184,337 @@ function LearningSession({
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       {isEmpty ? null : (
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-rule bg-background/82 px-4 backdrop-blur sm:px-6">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="font-semibold text-sm tracking-[-0.02em] uppercase">
-              {AGENT_NAME}
-            </span>
-            <StatusDot status={agent.status} />
-          </span>
-          {selectedTrack ? <TrackSignal track={selectedTrack} /> : null}
-        </header>
+        <LearningWorkspace
+          agentStatus={agent.status}
+          composer={composer}
+          error={agent.error?.message ?? null}
+          onChangePasscode={onChangePasscode}
+          selectedTrack={selectedTrack}
+        >
+          <Conversation className="min-h-0 flex-1">
+            <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-6">
+              {agent.data.messages.map((message, index) => (
+                <Fragment key={message.id}>
+                  {demo.birthMessageIndex === index ? (
+                    <CurriculumBirth writes={demo.birthWrites} />
+                  ) : null}
+                  {demo.adaptation?.messageIndex === index ? (
+                    <AdaptationMoment adaptation={demo.adaptation} />
+                  ) : null}
+                  <AgentMessage
+                    canRespond={!isBusy}
+                    canCompleteModule={!isBusy}
+                    canSubmitExercise={!isBusy}
+                    gradeAttempts={gradeAttempts}
+                    isStreaming={
+                      agent.status === "streaming" &&
+                      index === agent.data.messages.length - 1
+                    }
+                    message={message}
+                    onExerciseSubmit={handleExerciseSubmit}
+                    onInputResponses={(inputResponses) =>
+                      agent.send({ inputResponses })
+                    }
+                    onModuleComplete={handleModuleComplete}
+                  />
+                </Fragment>
+              ))}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+        </LearningWorkspace>
       )}
 
-      {agent.error ? (
-        <div className="mx-auto w-full max-w-4xl shrink-0 px-4 pt-3 sm:px-6">
-          <div className="flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2.5 text-sm">
-            <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
-            <div>
-              <p className="font-medium">Request failed</p>
-              <p className="mt-0.5 text-muted-foreground">
-                {agent.error.message}
-              </p>
-              {DEMO_ACCESS_REQUIRED ? (
-                <Button
-                  className="mt-2"
-                  onClick={onChangePasscode}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  Enter a different passcode
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {isEmpty ? null : (
-        <Conversation className="min-h-0 flex-1">
-          <ConversationContent className="mx-auto w-full max-w-4xl gap-6 px-4 py-6 sm:px-6">
-            {agent.data.messages.map((message, index) => (
-              <Fragment key={message.id}>
-                {demo.birthMessageIndex === index ? (
-                  <CurriculumBirth writes={demo.birthWrites} />
-                ) : null}
-                {demo.adaptation?.messageIndex === index ? (
-                  <AdaptationMoment adaptation={demo.adaptation} />
-                ) : null}
-                <AgentMessage
-                  canRespond={!isBusy}
-                  canCompleteModule={!isBusy}
-                  canSubmitExercise={!isBusy}
-                  gradeAttempts={gradeAttempts}
-                  isStreaming={
-                    agent.status === "streaming" &&
-                    index === agent.data.messages.length - 1
-                  }
-                  message={message}
-                  onExerciseSubmit={handleExerciseSubmit}
-                  onInputResponses={(inputResponses) =>
-                    agent.send({ inputResponses })
-                  }
-                  onModuleComplete={handleModuleComplete}
-                />
-              </Fragment>
-            ))}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
-      )}
-
-      <div
-        className={cn(
-          "mx-auto w-full px-4 sm:px-6",
-          isEmpty
-            ? "flex max-w-6xl flex-1 flex-col items-center justify-center gap-6 py-8 sm:py-12"
-            : "max-w-4xl shrink-0 pb-6",
-        )}
-      >
-        {isEmpty ? (
+      {isEmpty ? (
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6 sm:py-12">
           <>
             <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
             <ScheduledReviewNotice />
           </>
-        ) : null}
-        <div className="w-full">{composer}</div>
-        {isEmpty ? <DemoComposerPrompt /> : null}
-      </div>
+          <div className="w-full">{composer}</div>
+          <DemoComposerPrompt />
+        </div>
+      ) : null}
     </main>
   );
+}
+
+function LearningWorkspace({
+  agentStatus,
+  children,
+  composer,
+  error,
+  onChangePasscode,
+  selectedTrack,
+}: {
+  readonly agentStatus: AgentStatus;
+  readonly children: ReactNode;
+  readonly composer: ReactNode;
+  readonly error: string | null;
+  readonly onChangePasscode: () => void;
+  readonly selectedTrack: TrackSpec | null;
+}) {
+  const route = getLearningRoute(selectedTrack?.id ?? null);
+
+  return (
+    <section className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[14rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)_20rem]">
+      <aside className="hidden border-r border-rule bg-card/72 px-3 py-4 lg:flex lg:flex-col">
+        <div className="mb-7 flex items-center gap-2 px-2">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <GraduationCapIcon aria-hidden="true" className="size-4" />
+          </span>
+          <div>
+            <p className="font-semibold tracking-[-0.02em]">Dean</p>
+            <p className="text-muted-foreground text-xs">Tutor workspace</p>
+          </div>
+        </div>
+        <nav className="grid gap-1 text-sm">
+          <WorkspaceNavItem
+            active
+            icon={<BookOpenIcon />}
+            label="Current Tutor"
+          />
+          <WorkspaceNavItem icon={<PlusIcon />} label="Build New Tutor" />
+          <WorkspaceNavItem icon={<LibraryIcon />} label="Tutor Library" />
+          <WorkspaceNavItem icon={<UserIcon />} label="Profile" />
+        </nav>
+        <div className="mt-auto rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+          <p className="font-medium">Adaptive route</p>
+          <p className="mt-1 text-muted-foreground text-xs leading-5">
+            Dean updates the path from your answers, checks, and saved work.
+          </p>
+        </div>
+      </aside>
+
+      <section className="flex min-w-0 flex-col overflow-hidden">
+        <header className="shrink-0 border-b border-rule bg-background/82 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
+                <StatusDot status={agentStatus} />
+                Current path
+              </p>
+              <h1 className="mt-1 truncate font-semibold text-xl tracking-[-0.03em] sm:text-2xl">
+                {selectedTrack?.name ?? "Dean tutor"}
+              </h1>
+            </div>
+            {selectedTrack ? <TrackSignal track={selectedTrack} /> : null}
+          </div>
+          <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border bg-card text-center text-sm">
+            <span className="border-r px-3 py-2 font-medium text-primary">
+              Learn
+            </span>
+            <span className="border-r px-3 py-2 text-muted-foreground">
+              Explain differently
+            </span>
+            <span className="px-3 py-2 text-muted-foreground">Practice</span>
+          </div>
+        </header>
+
+        {error ? (
+          <div className="shrink-0 px-4 pt-3 sm:px-6">
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2.5 text-sm">
+              <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <div>
+                <p className="font-medium">Request failed</p>
+                <p className="mt-0.5 text-muted-foreground">{error}</p>
+                {DEMO_ACCESS_REQUIRED ? (
+                  <Button
+                    className="mt-2"
+                    onClick={onChangePasscode}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Enter a different passcode
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {children}
+
+        <div className="shrink-0 border-t border-rule bg-background/92 px-4 py-4 backdrop-blur sm:px-6">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-2 flex items-center gap-2 text-muted-foreground text-xs font-medium">
+              <MessageCircleIcon aria-hidden="true" className="size-3.5" />
+              Ask Dean to adapt the lesson, simplify the idea, or quiz you.
+            </div>
+            {composer}
+          </div>
+        </div>
+      </section>
+
+      <aside className="hidden min-w-0 border-l border-rule bg-card/72 xl:flex xl:flex-col">
+        <div className="border-b px-5 py-5">
+          <p className="flex items-center gap-2 text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+            <RouteIcon aria-hidden="true" className="size-3.5" />
+            Learning route
+          </p>
+          <h2 className="mt-2 text-pretty font-semibold leading-6">
+            {selectedTrack?.outcome ??
+              "A generated path that adapts as you work"}
+          </h2>
+        </div>
+        <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
+          {route.map((item) => (
+            <li
+              className={cn(
+                "rounded-lg border p-3 text-sm",
+                item.state === "active"
+                  ? "border-primary/35 bg-primary/5"
+                  : "bg-background/62",
+              )}
+              key={item.title}
+            >
+              <div className="flex items-start gap-2">
+                {item.state === "done" ? (
+                  <CheckCircle2Icon
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-success"
+                  />
+                ) : item.state === "active" ? (
+                  <CircleIcon
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 fill-primary text-primary"
+                  />
+                ) : (
+                  <CircleIcon
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-muted-foreground/45"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="font-medium">{item.title}</p>
+                  <p className="mt-1 text-muted-foreground text-xs leading-5">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </aside>
+    </section>
+  );
+}
+
+function WorkspaceNavItem({
+  active = false,
+  icon,
+  label,
+}: {
+  readonly active?: boolean;
+  readonly icon: ReactNode;
+  readonly label: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-2.5 py-2",
+        active
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+      )}
+    >
+      <span className="[&_svg]:size-4">{icon}</span>
+      {label}
+    </span>
+  );
+}
+
+type RouteItem = {
+  readonly description: string;
+  readonly state: "active" | "done" | "upcoming";
+  readonly title: string;
+};
+
+function getLearningRoute(trackId: TrackId | null): readonly RouteItem[] {
+  if (trackId === "data-to-decision") {
+    return [
+      {
+        description: "Frame the decision and define what evidence matters.",
+        state: "done",
+        title: "Question framing",
+      },
+      {
+        description: "Query the campaign data and pass the machine check.",
+        state: "active",
+        title: "SQL retrieval",
+      },
+      {
+        description:
+          "Read the result and connect it to a visual recommendation.",
+        state: "upcoming",
+        title: "Visualization interpretation",
+      },
+      {
+        description: "Write the director-ready recommendation.",
+        state: "upcoming",
+        title: "Recommendation artifact",
+      },
+    ];
+  }
+
+  if (trackId === "build-work-tool-codex") {
+    return [
+      {
+        description: "Define the repetitive task and acceptance criteria.",
+        state: "done",
+        title: "Tool intent",
+      },
+      {
+        description: "Build the small tested Codex work tool.",
+        state: "active",
+        title: "Implementation and tests",
+      },
+      {
+        description: "Run fixed artifact checks for proof of skill.",
+        state: "upcoming",
+        title: "Artifact verification",
+      },
+      {
+        description: "Explain what changed and what evidence proves it.",
+        state: "upcoming",
+        title: "Learner explanation",
+      },
+    ];
+  }
+
+  if (trackId === "executive-communication") {
+    return [
+      {
+        description: "Identify audience, stakes, and decision needed.",
+        state: "done",
+        title: "Audience calibration",
+      },
+      {
+        description: "Draft a concise leadership recommendation.",
+        state: "active",
+        title: "Recommendation draft",
+      },
+      {
+        description: "Compare revisions against the rubric.",
+        state: "upcoming",
+        title: "Judgment check",
+      },
+      {
+        description: "Save the final communication preview.",
+        state: "upcoming",
+        title: "Final artifact",
+      },
+    ];
+  }
+
+  return [
+    {
+      description: "Dean turns your goal into a visible route.",
+      state: "active",
+      title: "Tutor route",
+    },
+  ];
 }
 
 function DemoAccessGate({
@@ -349,7 +603,7 @@ function ScheduledReviewNotice() {
   );
 }
 
-function StatusDot({ status }: { readonly status: AgentStatus; }) {
+function StatusDot({ status }: { readonly status: AgentStatus }) {
   const isLive = status === "submitted" || status === "streaming";
   const tone =
     status === "error"
