@@ -27,9 +27,10 @@ The core idea is simple:
 > seven approved interactive components, and supported SQL exercises use
 > authoritative deterministic grading events. The Build a Work Tool with Codex
 > secondary track also runs through one polished lesson, a controlled Node
-> artifact, fixed behavioral checks, and a saved learner explanation.
-> Failure-driven rewriting, the Executive Communication preview, and deployment
-> remain planned work. See
+> artifact, fixed behavioral checks, and a saved learner explanation. The
+> Executive Communication track now runs one prepared leadership scenario
+> through two preserved drafts and a concrete, visibly judgment-supported
+> comparison. Failure-driven rewriting and deployment remain planned work. See
 > [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
@@ -139,9 +140,14 @@ the README marker, exact behavioral tests, Node syntax, and test execution.
 
 ### Executive Communication
 
-The learner converts a complex update into a leadership recommendation. Dean
-uses a visible rubric, cites observable differences between revisions, and
-labels the feedback as guided judgment rather than verified mastery.
+The learner converts one prepared product-launch update into a concise
+leadership recommendation. Dean first calibrates for audience, stakes/context,
+and communication goal, then exposes the complete scenario and a five-part
+rubric before the learner writes. Both drafts are preserved verbatim. The final
+comparison cites observable changes in the recommendation, decision or ask,
+evidence, tradeoff, and concision. It is visibly labeled
+`Guided judgment — not verified mastery.` and never produces a score or
+employee evaluation.
 
 ## How Dean works
 
@@ -263,13 +269,19 @@ thesis.
 - The Codex artifact card can request only `codex-node-tool-v1`; it cannot send
   a learner path, command, expected result, or `passed` value. A real semantic
   break keeps syntax valid but fails the same fixed behavioral tests.
+- The Executive Communication preview passes a fresh browser journey: exactly
+  three calibration questions, four ordered initial workspace writes, one
+  prepared launch decision, a visible five-part rubric, two verbatim learner
+  drafts, and a comparison grounded in observable wording changes.
+- Executive feedback is explicitly labeled `Guided judgment — not verified
+  mastery.` The flow emits no deterministic grader request, score, pass/fail
+  result, objective ability claim, or employee-evaluation output.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- The Executive Communication preview is not built.
 - Failure-driven rewriting and the visible curriculum diff are not built.
 - Guardrails, scheduled review, deployment, and submission validation remain.
 - Workspace persistence has not been verified on deployed Vercel Sandbox.
@@ -401,9 +413,15 @@ To confirm the complete hero journey and curated routing contract:
 6. Complete the four-part I/A/V/smallest-build reveal and inspect the artifact
    diagram. Run the four fixed artifact checks and confirm only the authoritative
    pass unlocks Done. Submit the requested Change and Verification lines.
-7. In another fresh session, enter an unsupported goal such as `Teach me
+7. In another fresh session, enter `Executive Communication`. Answer the three
+   questions about audience, stakes/context, and communication goal.
+8. Inspect the prepared launch scenario and five-part rubric, select Done, and
+   submit a first recommendation followed by a revision. Confirm both drafts
+   are saved verbatim and the comparison cites concrete wording changes without
+   showing a score or pass/fail result.
+9. In another fresh session, enter an unsupported goal such as `Teach me
    conversational French`.
-8. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
+10. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
    Executive Communication, with no freeform subject option.
 
 Stop the server with `Ctrl+C`.
@@ -421,6 +439,7 @@ Stop the server with `Ctrl+C`.
 │   │   ├── adapt-on-failure.md          # Recovery playbook
 │   │   ├── build-work-tool-codex.md     # Controlled Codex artifact lesson
 │   │   ├── data-to-decision-hero.md     # Complete hero journey contract
+│   │   ├── executive-communication-preview.md # Guided-judgment preview
 │   │   └── dean-generate-curriculum.md  # Calibration and curriculum playbook
 │   └── tools/
 │       ├── render_module.ts              # Typed lesson-delivery boundary
@@ -462,8 +481,9 @@ Stop the server with `Ctrl+C`.
   Build a Work Tool with Codex, and Executive Communication. Arbitrary subjects
   remain outside the active milestone.
 - **Current runtime truth.** Routing and curriculum scaffolds exist for the
-  three approved tracks. Data to Decision and the bounded Codex artifact lesson
-  are complete; Executive Communication remains a routing preview.
+  three approved tracks. Data to Decision is the complete hero; the bounded
+  Codex lesson and Executive Communication scenario provide their promised
+  one-lesson and one-preview depths.
 - **Typed rendering only.** The model emits registry data, never raw generated
   JSX or HTML.
 - **No `dangerouslySetInnerHTML`.** Markdown must not create an HTML injection
