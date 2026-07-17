@@ -7,7 +7,7 @@ destination: youtube
 aspect: 1920x1080
 language: en
 audience: OpenAI Build Week judges and professional learners
-length: 75s
+length: 55s
 angle: show-it-as-is product showcase
 ---
 
@@ -42,5 +42,5 @@ hype-driven.
 - YouTube/desktop landscape is derived from the submission's public-review
   destination.
 - The video must stay under the competition's three-minute limit; this draft
-  targets about 75 seconds.
+  targets about 55 seconds after local narration timing.
 - The final render requires the user's explicit preview-or-render decision.
