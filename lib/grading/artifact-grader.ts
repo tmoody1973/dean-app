@@ -14,6 +14,31 @@ import {
 export { ArtifactGradeInputSchema } from "#grading/contracts";
 export type { ArtifactGradeInput } from "#grading/contracts";
 
+export const CODEX_NODE_TOOL_TEST_SOURCE = [
+  'import assert from "node:assert/strict";',
+  'import test from "node:test";',
+  'import { formatStatus } from "../src/index.mjs";',
+  "",
+  'test("summarizes completed and blocked work", () => {',
+  "  const result = formatStatus([",
+  '    { task: "Publish report", status: "done" },',
+  '    { task: "Vendor approval", status: "blocked" },',
+  '    { task: "Review forecast", status: "done" },',
+  '    { task: "Plan kickoff", status: "active" },',
+  "  ]);",
+  '  assert.equal(result, "Completed: 2/4\\nBlocked: Vendor approval");',
+  "});",
+  "",
+  'test("reports when no work is blocked", () => {',
+  "  const result = formatStatus([",
+  '    { task: "Publish report", status: "done" },',
+  '    { task: "Plan kickoff", status: "active" },',
+  "  ]);",
+  '  assert.equal(result, "Completed: 1/2\\nBlocked: none");',
+  "});",
+  "",
+].join("\n");
+
 const safeRelativePathSchema = z
   .string()
   .min(1)
@@ -33,6 +58,16 @@ const fileCriterionSchema = z
     id: z.string().min(1),
     path: safeRelativePathSchema,
     marker: z.string().min(1).max(120),
+    maxBytes: z.number().int().positive().max(64 * 1024),
+  })
+  .strict();
+
+const exactFileCriterionSchema = z
+  .object({
+    type: z.literal("exact-file"),
+    id: z.string().min(1),
+    path: safeRelativePathSchema,
+    content: z.string().min(1).max(64 * 1024),
     maxBytes: z.number().int().positive().max(64 * 1024),
   })
   .strict();
@@ -59,6 +94,7 @@ const artifactProfileSchema = z
     criteria: z
       .tuple([
         fileCriterionSchema,
+        exactFileCriterionSchema,
         commandCriterionSchema,
         commandCriterionSchema,
       ])
@@ -78,6 +114,13 @@ const CODEX_NODE_TOOL_PROFILE: ArtifactProfile = artifactProfileSchema.parse({
       path: "artifacts/codex-node-tool-v1/README.md",
       marker: "dean-artifact-profile: codex-node-tool-v1",
       maxBytes: 32 * 1024,
+    },
+    {
+      type: "exact-file",
+      id: "behavioral-test-contract",
+      path: "artifacts/codex-node-tool-v1/tests/index.test.mjs",
+      content: CODEX_NODE_TOOL_TEST_SOURCE,
+      maxBytes: 16 * 1024,
     },
     {
       type: "command",
@@ -154,11 +197,17 @@ export async function gradeArtifact(
       const result =
         criterion.type === "file-marker"
           ? await evaluateFileCriterion(sandbox, criterion, abortSignal)
+          : criterion.type === "exact-file"
+            ? await evaluateExactFileCriterion(sandbox, criterion, abortSignal)
           : await evaluateCommandCriterion(sandbox, criterion, abortSignal);
 
       results.push(result);
 
-      if (result.error?.code === "TIMEOUT" || result.error?.code === "OUTPUT_LIMIT") {
+      if (
+        (criterion.type === "exact-file" && !result.satisfied) ||
+        result.error?.code === "TIMEOUT" ||
+        result.error?.code === "OUTPUT_LIMIT"
+      ) {
         break;
       }
     }
@@ -201,12 +250,98 @@ export async function gradeArtifact(
       profileId: profile.id,
       criteria: [
         "README contains the fixed Dean artifact marker",
+        "tests/index.test.mjs exactly matches the server-owned behavioral tests",
         "src/index.mjs passes the fixed Node syntax check",
         "tests/index.test.mjs passes the fixed Node test command",
       ],
     }),
     error,
   });
+}
+
+async function evaluateExactFileCriterion(
+  sandbox: SandboxSession,
+  criterion: Extract<ArtifactCriterion, { type: "exact-file" }>,
+  abortSignal?: AbortSignal,
+): Promise<CriterionResult> {
+  const read = await readFileWithinLimit(
+    sandbox,
+    criterion.path,
+    criterion.maxBytes,
+    abortSignal,
+  );
+
+  if (read.status === "missing") {
+    return {
+      id: criterion.id,
+      type: criterion.type,
+      satisfied: false,
+      evidence: { path: criterion.path, exists: false },
+      error: {
+        code: "MISSING_FILE",
+        message: "The required behavioral test file is missing.",
+        retryable: true,
+      },
+    };
+  }
+
+  if (read.status === "limit") {
+    return {
+      id: criterion.id,
+      type: criterion.type,
+      satisfied: false,
+      evidence: {
+        path: criterion.path,
+        exists: true,
+        capturedBytes: read.capturedBytes,
+        limitBytes: criterion.maxBytes,
+      },
+      error: {
+        code: "OUTPUT_LIMIT",
+        message: "The behavioral test file exceeded the verification limit.",
+        retryable: true,
+      },
+    };
+  }
+
+  let content: string;
+
+  try {
+    content = new TextDecoder("utf-8", { fatal: true }).decode(read.bytes);
+  } catch {
+    return {
+      id: criterion.id,
+      type: criterion.type,
+      satisfied: false,
+      evidence: { path: criterion.path, exists: true, validUtf8: false },
+      error: {
+        code: "CRITERIA_MISMATCH",
+        message: "The behavioral test file must be valid UTF-8 text.",
+        retryable: true,
+      },
+    };
+  }
+
+  const exactMatch = content === criterion.content;
+
+  return {
+    id: criterion.id,
+    type: criterion.type,
+    satisfied: exactMatch,
+    evidence: {
+      path: criterion.path,
+      exists: true,
+      bytes: read.bytes.byteLength,
+      exactMatch,
+    },
+    error: exactMatch
+      ? null
+      : {
+          code: "CRITERIA_MISMATCH",
+          message: "The behavioral tests do not match the approved contract.",
+          retryable: true,
+        },
+  };
 }
 
 async function evaluateFileCriterion(

@@ -10,11 +10,12 @@ import type { SandboxProcess, SandboxSession } from "eve/sandbox";
 
 // Node's type-stripping runtime requires the .ts extension.
 // @ts-expect-error The project intentionally leaves allowImportingTsExtensions disabled.
-import { ArtifactGradeInputSchema, gradeArtifact } from "../lib/grading/artifact-grader.ts";
+import { ArtifactGradeInputSchema, CODEX_NODE_TOOL_TEST_SOURCE, gradeArtifact } from "../lib/grading/artifact-grader.ts";
 
 const encoder = new TextEncoder();
 const PROFILE_ROOT = "artifacts/codex-node-tool-v1";
 const MARKER_PATH = `${PROFILE_ROOT}/README.md`;
+const TEST_PATH = `${PROFILE_ROOT}/tests/index.test.mjs`;
 const BUILD_COMMAND = "node --check src/index.mjs";
 const TEST_COMMAND = "node --test tests/index.test.mjs";
 
@@ -58,6 +59,7 @@ function createProcess(plan: ProcessPlan): SandboxProcess & { readonly killed: (
 
 function createSandbox(options?: {
   readonly marker?: string | null;
+  readonly testSource?: string | null;
   readonly build?: ProcessPlan;
   readonly test?: ProcessPlan;
 }) {
@@ -70,10 +72,16 @@ function createSandbox(options?: {
     options?.marker === undefined
       ? "# Tiny tool\n\ndean-artifact-profile: codex-node-tool-v1\n"
       : options.marker;
+  const testSource =
+    options?.testSource === undefined
+      ? CODEX_NODE_TOOL_TEST_SOURCE
+      : options.testSource;
 
   const sandbox = {
     async readFile({ path }: { path: string }) {
-      return path === MARKER_PATH && marker !== null ? streamText(marker) : null;
+      if (path === MARKER_PATH && marker !== null) return streamText(marker);
+      if (path === TEST_PATH && testSource !== null) return streamText(testSource);
+      return null;
     },
     async spawn({
       command,
@@ -93,7 +101,7 @@ function createSandbox(options?: {
   return { sandbox, commands };
 }
 
-test("the fixed Codex artifact profile passes all three bounded checks", async () => {
+test("the fixed Codex artifact profile passes all four bounded checks", async () => {
   const { sandbox, commands } = createSandbox();
 
   const result = await gradeArtifact({ profileId: "codex-node-tool-v1" }, sandbox);
@@ -107,6 +115,23 @@ test("the fixed Codex artifact profile passes all three bounded checks", async (
       { command: TEST_COMMAND, workingDirectory: PROFILE_ROOT },
     ],
   );
+});
+
+test("a weakened behavioral test file fails closed without executing it", async () => {
+  const weakenedSource = [
+    'import test from "node:test";',
+    'test("always passes", () => {});',
+    "",
+  ].join("\n");
+  const { sandbox, commands } = createSandbox({ testSource: weakenedSource });
+
+  const result = await gradeArtifact({ profileId: "codex-node-tool-v1" }, sandbox);
+
+  assert.equal(result.passed, false);
+  assert.equal(result.error?.code, "CRITERIA_MISMATCH");
+  assert.equal(commands.length, 0);
+  assert.doesNotMatch(result.actualOutput, /always passes/);
+  assert.doesNotMatch(result.actualOutput, /import test/);
 });
 
 test("a missing marker file fails closed without exposing file contents", async () => {
@@ -200,6 +225,8 @@ test("the public input accepts only the server-owned profile id", () => {
 test("the fixed profile passes and fails against a real bounded Node artifact", async () => {
   const root = await mkdtemp(join(tmpdir(), "dean-artifact-grade-"));
   const artifactRoot = join(root, PROFILE_ROOT);
+  const failingRoot = await mkdtemp(join(tmpdir(), "dean-artifact-grade-failing-"));
+  const failingArtifactRoot = join(failingRoot, PROFILE_ROOT);
 
   try {
     await mkdir(join(artifactRoot, "src"), { recursive: true });
@@ -210,17 +237,20 @@ test("the fixed profile passes and fails against a real bounded Node artifact", 
     );
     await writeFile(
       join(artifactRoot, "src/index.mjs"),
-      "export const add = (left, right) => left + right;\n",
+      [
+        "export function formatStatus(items) {",
+        '  const completed = items.filter(({ status }) => status === "done").length;',
+        "  const blocked = items",
+        '    .filter(({ status }) => status === "blocked")',
+        "    .map(({ task }) => task);",
+        '  return `Completed: ${completed}/${items.length}\\nBlocked: ${blocked.length > 0 ? blocked.join(", ") : "none"}`;',
+        "}",
+        "",
+      ].join("\n"),
     );
     await writeFile(
       join(artifactRoot, "tests/index.test.mjs"),
-      [
-        'import assert from "node:assert/strict";',
-        'import test from "node:test";',
-        'import { add } from "../src/index.mjs";',
-        'test("adds", () => assert.equal(add(2, 3), 5));',
-        "",
-      ].join("\n"),
+      CODEX_NODE_TOOL_TEST_SOURCE,
     );
 
     const sandbox = createLocalFixtureSandbox(root);
@@ -232,16 +262,37 @@ test("the fixed profile passes and fails against a real bounded Node artifact", 
     assert.equal(passing.passed, true);
     assert.equal(passing.error, null);
 
-    await writeFile(join(artifactRoot, "src/index.mjs"), "export const broken = ;\n");
+    await mkdir(join(failingArtifactRoot, "src"), { recursive: true });
+    await mkdir(join(failingArtifactRoot, "tests"), { recursive: true });
+    await writeFile(
+      join(failingArtifactRoot, "README.md"),
+      "dean-artifact-profile: codex-node-tool-v1\n",
+    );
+    await writeFile(
+      join(failingArtifactRoot, "src/index.mjs"),
+      [
+        "export function formatStatus(items) {",
+        '  return `Completed: 0/${items.length}\\nBlocked: none`;',
+        "}",
+        "",
+      ].join("\n"),
+    );
+    await writeFile(
+      join(failingArtifactRoot, "tests/index.test.mjs"),
+      CODEX_NODE_TOOL_TEST_SOURCE,
+    );
     const failing = await gradeArtifact(
       { profileId: "codex-node-tool-v1" },
-      sandbox,
+      createLocalFixtureSandbox(failingRoot),
     );
 
-    assert.equal(failing.passed, false);
+    assert.equal(failing.passed, false, failing.actualOutput);
     assert.equal(failing.error?.code, "NONZERO_EXIT");
   } finally {
-    await rm(root, { recursive: true, force: true });
+    await Promise.all([
+      rm(root, { recursive: true, force: true }),
+      rm(failingRoot, { recursive: true, force: true }),
+    ]);
   }
 });
 
@@ -262,6 +313,8 @@ function createLocalFixtureSandbox(root: string): SandboxSession {
       }
     },
     async spawn({ command, workingDirectory, abortSignal }) {
+      const env = { ...process.env };
+      delete env.NODE_TEST_CONTEXT;
       const args =
         command === BUILD_COMMAND
           ? ["--check", "src/index.mjs"]
@@ -273,6 +326,7 @@ function createLocalFixtureSandbox(root: string): SandboxSession {
 
       const child = spawnChild(process.execPath, args, {
         cwd: join(root, workingDirectory ?? ""),
+        env,
         signal: abortSignal,
         stdio: ["ignore", "pipe", "pipe"],
       });

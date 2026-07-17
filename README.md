@@ -25,8 +25,11 @@ The core idea is simple:
 > calibration through four interactive lessons to a saved recommendation
 > artifact. Validated lessons render through a safe one-block shell backed by all
 > seven approved interactive components, and supported SQL exercises use
-> authoritative deterministic grading events. Failure-driven rewriting, the two
-> secondary-track experiences, and deployment remain planned work. See
+> authoritative deterministic grading events. The Build a Work Tool with Codex
+> secondary track also runs through one polished lesson, a controlled Node
+> artifact, fixed behavioral checks, and a saved learner explanation.
+> Failure-driven rewriting, the Executive Communication preview, and deployment
+> remain planned work. See
 > [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
@@ -130,7 +133,9 @@ decision artifact.
 
 The learner identifies repetitive work, writes acceptance criteria, uses Codex
 to build the smallest useful tool, tests it, and explains what changed. The
-artifact must pass a bounded file, build, or test check.
+prepared lesson writes a dependency-free status formatter only inside its fixed
+workspace directory. Progress unlocks only after a server-owned profile verifies
+the README marker, exact behavioral tests, Node syntax, and test execution.
 
 ### Executive Communication
 
@@ -231,8 +236,9 @@ thesis.
   output, unordered row-match, and contains-all comparisons with hard time and
   output limits.
 - The same tool can verify the Codex track through one server-owned artifact
-  profile with a bounded file marker, fixed syntax check, and fixed test command
-  inside eve's session sandbox.
+  profile with a bounded file marker, an exact server-owned behavioral test
+  contract, a fixed syntax check, and a fixed test command inside eve's session
+  sandbox.
 - Local Docker-backed workspace files survived session parking and a full
   local server restart during the spike.
 - Local browser acceptance covers grader errors, deterministic failure and
@@ -249,13 +255,21 @@ thesis.
 - Completing the recommendation lesson advances the workspace into artifact
   collection; the next learner message is preserved verbatim alongside the
   separately sourced business question and canonical evidence.
+- The Build a Work Tool with Codex track passes a fresh prepared browser journey:
+  exactly three calibration questions, a learner profile and one-lesson course
+  preview, seven ordered initial file writes, visible I/A/V/smallest-build
+  teaching, four authoritative artifact criteria, and a verbatim learner
+  explanation.
+- The Codex artifact card can request only `codex-node-tool-v1`; it cannot send
+  a learner path, command, expected result, or `passed` value. A real semantic
+  break keeps syntax valid but fails the same fixed behavioral tests.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- The Codex artifact lesson and Executive Communication preview are not built.
+- The Executive Communication preview is not built.
 - Failure-driven rewriting and the visible curriculum diff are not built.
 - Guardrails, scheduled review, deployment, and submission validation remain.
 - Workspace persistence has not been verified on deployed Vercel Sandbox.
@@ -381,9 +395,15 @@ To confirm the complete hero journey and curated routing contract:
 4. Complete the visualization and recommendation relationship checks. Submit
    the requested four labeled recommendation lines and confirm
    `/workspace/artifacts/recommendation.md` is written.
-5. In another fresh session, enter an unsupported goal such as `Teach me
+5. In another fresh session, enter `Build a Work Tool with Codex`. Answer the
+   three calibration questions with a repetitive status-reporting task, current
+   spreadsheet workflow, and observable result.
+6. Complete the four-part I/A/V/smallest-build reveal and inspect the artifact
+   diagram. Run the four fixed artifact checks and confirm only the authoritative
+   pass unlocks Done. Submit the requested Change and Verification lines.
+7. In another fresh session, enter an unsupported goal such as `Teach me
    conversational French`.
-6. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
+8. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
    Executive Communication, with no freeform subject option.
 
 Stop the server with `Ctrl+C`.
@@ -399,6 +419,7 @@ Stop the server with `Ctrl+C`.
 │   ├── lib/learner-session.ts            # Durable selected-track state
 │   ├── skills/
 │   │   ├── adapt-on-failure.md          # Recovery playbook
+│   │   ├── build-work-tool-codex.md     # Controlled Codex artifact lesson
 │   │   ├── data-to-decision-hero.md     # Complete hero journey contract
 │   │   └── dean-generate-curriculum.md  # Calibration and curriculum playbook
 │   └── tools/
@@ -441,8 +462,8 @@ Stop the server with `Ctrl+C`.
   Build a Work Tool with Codex, and Executive Communication. Arbitrary subjects
   remain outside the active milestone.
 - **Current runtime truth.** Routing and curriculum scaffolds exist for the
-  three approved tracks. Data to Decision is complete; the two secondary tracks
-  remain bounded previews rather than complete learning journeys.
+  three approved tracks. Data to Decision and the bounded Codex artifact lesson
+  are complete; Executive Communication remains a routing preview.
 - **Typed rendering only.** The model emits registry data, never raw generated
   JSX or HTML.
 - **No `dangerouslySetInnerHTML`.** Markdown must not create an HTML injection

@@ -39,18 +39,21 @@ contracts, progression, and final recommendation artifact. Do not ask any Data
 to Decision calibration question from this routing skill and do not add a
 fourth calibration question.
 
-### Preview tracks — exactly 3 questions, one message each
+### Preview tracks
 
-For either preview track, ask its three questions in order, one message at a
-time, waiting for each answer.
+The remaining two tracks deliberately have different depths: one complete
+secondary-track lesson and one routing preview.
 
-### Build a Work Tool with Codex
+### Build a Work Tool with Codex — complete secondary-track lesson
 
-1. **Outcome:** "What repetitive work task would you like a small tool to change?"
-2. **Anchor:** "How do you do that task today, and which files or tools are involved?"
-3. **Reality check:** "What observable result would prove the smallest useful tool works?" Use the specificity of the answer to set `intro` or `core` difficulty.
+Load the build-work-tool-codex skill immediately. It is the sole authority for
+this track's three calibration questions, file choreography, controlled
+artifact, polished lesson, progression, and learner explanation. Do not ask a
+Build a Work Tool question here and do not add a fourth calibration question.
 
-### Executive Communication
+### Executive Communication preview — exactly 3 questions
+
+Ask these questions in order, one message at a time, waiting for each answer.
 
 1. **Outcome:** "Which audience needs a decision or recommendation from you?"
 2. **Anchor:** "What are the stakes, and what context does that audience already have?"
@@ -58,8 +61,8 @@ time, waiting for each answer.
 
 ## Step 2 — Write a preview curriculum to /workspace
 
-This step applies only to Build a Work Tool with Codex and Executive
-Communication. Data to Decision uses the hero skill's seven-file contract.
+This step applies only to Executive Communication. Data to Decision and Build a
+Work Tool with Codex use their own complete, bounded skill contracts.
 
 Write these files with `write_file`, ONE FILE PER CALL, in this exact order.
 The frontend streams each write as it happens, so order is choreography.
@@ -76,7 +79,6 @@ The frontend streams each write as it happens, so order is choreography.
 3. `/workspace/curriculum.md`
    - Repeat `track_id`, `track`, and `verification_tiers` exactly at the top.
    - Add `current: 01-preview` and an outcome-level map for the selected track:
-     - Build a Work Tool with Codex: define the repetitive task → write acceptance criteria → build the smallest useful artifact → verify and explain it.
      - Executive Communication: identify audience and stakes → practice one leadership scenario → revise against a visible judgment-supported rubric.
    - Give each map item a one-line outcome, modality, difficulty, and status
      (`pending` / `active` / `passed`). Do not write polished lesson content.
@@ -88,9 +90,8 @@ The frontend streams each write as it happens, so order is choreography.
 
 ## Step 3 — Hand off preview tracks with a routing preview
 
-This step applies only to Build a Work Tool with Codex and Executive
-Communication. After the last preview file writes, call `render_module` with
-one valid `explain` block
+This step applies only to Executive Communication. After the last preview file
+writes, call `render_module` with one valid `explain` block
 that names the selected track, shows its verification label, and previews the
 outcome map. This is a routing confirmation, not a full lesson. Then say at
 most one short sentence.

@@ -34,12 +34,32 @@ type CodeExerciseBlockProps = {
   readonly onSubmit: (input: GradeExerciseInput) => Promise<void>;
 };
 
+const ARTIFACT_PROFILE_ID = "codex-node-tool-v1" as const;
+const ARTIFACT_CRITERIA = [
+  "README marker",
+  "Exact prepared test file",
+  "Node syntax",
+  "Node behavior tests",
+] as const;
+
 export function CodeExerciseBlock(props: CodeExerciseBlockProps) {
-  if (props.block.language !== "sql") {
-    return <UnverifiedCodeExercise {...props} />;
+  if (props.block.language === "sql") {
+    return <SqlCodeExercise {...props} block={props.block} />;
   }
 
-  return <SqlCodeExercise {...props} block={props.block} />;
+  if (isCanonicalArtifactBlock(props.block)) {
+    return <ArtifactCodeExercise {...props} />;
+  }
+
+  return <UnverifiedCodeExercise {...props} />;
+}
+
+function isCanonicalArtifactBlock(block: CodeExercise): boolean {
+  return (
+    block.language === "typescript" &&
+    block.grading.mode === "exactOutput" &&
+    block.grading.expected === ARTIFACT_PROFILE_ID
+  );
 }
 
 function SqlCodeExercise({
@@ -212,6 +232,265 @@ function SqlCodeExercise({
       ) : null}
     </div>
   );
+}
+
+function ArtifactCodeExercise({
+  block,
+  blockIndex,
+  canSubmit,
+  gradeAttempts,
+  moduleId,
+  onCheckedChange,
+  onSubmit,
+}: CodeExerciseBlockProps) {
+  const [activeAttempt, setActiveAttempt] = useState<GradeExerciseInput | null>(
+    null,
+  );
+  const [sendSettled, setSendSettled] = useState(false);
+  const [sendFailed, setSendFailed] = useState(false);
+  const feedbackId = useId();
+  const attempt = activeAttempt
+    ? findExactGradeAttempt(gradeAttempts, activeAttempt)
+    : undefined;
+  const result = attempt?.status === "completed" ? attempt.result : null;
+  const verifiedPass = result?.error === null && result.passed;
+  const criteriaFailure =
+    result !== null &&
+    !result.passed &&
+    (result.error === null ||
+      result.error.code === "MISSING_FILE" ||
+      result.error.code === "CRITERIA_MISMATCH" ||
+      result.error.code === "NONZERO_EXIT");
+  const isSending = activeAttempt !== null && !sendSettled && !sendFailed;
+  const isWaiting =
+    isSending && result === null && attempt?.status !== "error";
+  const retryMessage = getArtifactRetryMessage({
+    activeAttempt,
+    attempt,
+    result,
+    sendFailed,
+    sendSettled,
+  });
+  const state =
+    activeAttempt === null
+      ? "idle"
+      : isWaiting
+        ? "pending"
+        : verifiedPass
+          ? "passed"
+          : criteriaFailure
+            ? "failed"
+            : "retry";
+  const canRunChecks = canSubmit && activeAttempt === null;
+
+  useEffect(() => {
+    onCheckedChange(verifiedPass === true);
+  }, [onCheckedChange, verifiedPass]);
+
+  const clearAttempt = () => {
+    setActiveAttempt(null);
+    setSendSettled(false);
+    setSendFailed(false);
+    onCheckedChange(false);
+  };
+
+  const runArtifactChecks = async () => {
+    if (!canRunChecks) return;
+
+    const submission = {
+      attemptId: crypto.randomUUID(),
+      blockIndex,
+      kind: "artifact",
+      moduleId,
+      profileId: ARTIFACT_PROFILE_ID,
+    } satisfies GradeExerciseInput;
+
+    setActiveAttempt(submission);
+    setSendSettled(false);
+    setSendFailed(false);
+    onCheckedChange(false);
+
+    try {
+      await onSubmit(submission);
+    } catch {
+      setSendFailed(true);
+    } finally {
+      setSendSettled(true);
+    }
+  };
+
+  return (
+    <div
+      aria-describedby={activeAttempt ? feedbackId : undefined}
+      className="max-w-2xl rounded-2xl border bg-muted/20 p-5 sm:p-6"
+      data-testid="artifact-verification-card"
+    >
+      <p className="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
+        Artifact verification
+      </p>
+      <p className="mt-4 text-pretty text-lg leading-8">{block.prompt}</p>
+      <p className="mt-3 text-muted-foreground text-sm leading-6">
+        The approved checker verifies this controlled project against four fixed
+        criteria.
+      </p>
+
+      <ul className="mt-5 space-y-2" aria-label="Artifact verification criteria">
+        {ARTIFACT_CRITERIA.map((criterion) => (
+          <li className="flex items-center gap-2.5 text-sm" key={criterion}>
+            <ArtifactCriterionIcon state={state} />
+            <span>{criterion}</span>
+          </li>
+        ))}
+      </ul>
+
+      {activeAttempt === null ? (
+        <Button
+          className="mt-6 h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
+          disabled={!canRunChecks}
+          onClick={() => void runArtifactChecks()}
+          type="button"
+        >
+          Run artifact checks
+        </Button>
+      ) : (
+        <div
+          aria-live="polite"
+          className="mt-6 rounded-xl border bg-background/70 p-4"
+          id={feedbackId}
+          role="status"
+        >
+          {isWaiting ? (
+            <FeedbackLine
+              icon={<LoaderCircleIcon aria-hidden="true" className="size-4 animate-spin" />}
+              title="Running the fixed artifact checks…"
+            />
+          ) : verifiedPass ? (
+            <FeedbackLine
+              icon={<CheckCircleIcon aria-hidden="true" className="size-4" />}
+              title="Verified. Every fixed artifact criterion passed."
+            />
+          ) : criteriaFailure ? (
+            <ArtifactRetryFeedback
+              icon={<CircleXIcon aria-hidden="true" className="size-4" />}
+              message="The artifact did not satisfy every fixed criterion."
+              onRetry={clearAttempt}
+            />
+          ) : (
+            <ArtifactRetryFeedback
+              icon={<AlertCircleIcon aria-hidden="true" className="size-4" />}
+              message={
+                retryMessage ??
+                "No authoritative artifact result was returned. Run the checks again."
+              }
+              onRetry={clearAttempt}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArtifactCriterionIcon({
+  state,
+}: {
+  readonly state: "idle" | "pending" | "passed" | "failed" | "retry";
+}) {
+  if (state === "passed") {
+    return (
+      <CheckCircleIcon
+        aria-hidden="true"
+        className="size-4 shrink-0 text-emerald-600"
+      />
+    );
+  }
+  if (state === "pending") {
+    return (
+      <LoaderCircleIcon
+        aria-hidden="true"
+        className="size-4 shrink-0 animate-spin"
+      />
+    );
+  }
+  if (state === "failed") {
+    return (
+      <CircleXIcon
+        aria-hidden="true"
+        className="size-4 shrink-0 text-destructive"
+      />
+    );
+  }
+  if (state === "retry") {
+    return (
+      <AlertCircleIcon
+        aria-hidden="true"
+        className="size-4 shrink-0 text-amber-600"
+      />
+    );
+  }
+  return (
+    <InfoIcon
+      aria-hidden="true"
+      className="size-4 shrink-0 text-muted-foreground"
+    />
+  );
+}
+
+function ArtifactRetryFeedback({
+  icon,
+  message,
+  onRetry,
+}: {
+  readonly icon: ReactNode;
+  readonly message: string;
+  readonly onRetry: () => void;
+}) {
+  return (
+    <div>
+      <FeedbackLine icon={icon} title={message} />
+      <Button
+        className="mt-2 h-auto px-0 py-1"
+        onClick={onRetry}
+        type="button"
+        variant="link"
+      >
+        <RotateCcwIcon aria-hidden="true" />
+        Try checks again
+      </Button>
+    </div>
+  );
+}
+
+function getArtifactRetryMessage({
+  activeAttempt,
+  attempt,
+  result,
+  sendFailed,
+  sendSettled,
+}: {
+  readonly activeAttempt: GradeExerciseInput | null;
+  readonly attempt: GradeAttemptProjection["attempts"][number] | undefined;
+  readonly result: GradeAttemptProjection["attempts"][number]["result"];
+  readonly sendFailed: boolean;
+  readonly sendSettled: boolean;
+}): string | null {
+  if (result?.error) return result.error.message;
+  if (attempt?.status === "error") {
+    return (
+      attempt.protocolError?.message ??
+      "The artifact checker could not complete this attempt."
+    );
+  }
+  if (
+    activeAttempt !== null &&
+    (sendFailed || (sendSettled && attempt === undefined))
+  ) {
+    return "No matching artifact result was returned. Run the checks again.";
+  }
+  if (activeAttempt !== null && sendSettled && attempt?.status === "pending") {
+    return "The artifact checker did not finish this attempt. Run the checks again.";
+  }
+  return null;
 }
 
 function UnverifiedCodeExercise({
