@@ -32,7 +32,8 @@ The core idea is simple:
 > through two preserved drafts and a concrete, visibly judgment-supported
 > comparison. The first eligible Data to Decision SQL mismatch now preserves the
 > original lesson and evidence, then rebuilds a visual, mistake-specific retry.
-> A readable side-by-side diff and deployment remain planned work. See
+> A readable side-by-side diff remains planned work. Deployment durability is
+> verified. See
 > [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
@@ -301,8 +302,21 @@ thesis.
 
 ### Planned but not finished
 
-- Deployment durability and submission validation remain.
-- Workspace persistence has not been verified on deployed Vercel Sandbox.
+- Submission validation remains.
+
+### Production durability — verified
+
+- Dean is deployed as one Vercel project containing the Next.js web app and Eve
+  runtime.
+- A real deployed learner session generated all seven curriculum files,
+  rendered module 1, parked, and resumed from the same stored curriculum and
+  learner position.
+- Production Eve routes use the shared demo passcode policy. The passcode is a
+  sensitive Vercel environment variable and never enters client assets or git.
+- The production build source-compiles `sqlite3` for Vercel's Linux runtime.
+
+See the [production durability verification record](docs/verification/2026-07-17-moo-281-production-durability.md)
+for the deployment, event-stream, and log evidence.
 
 The repository separates verified behavior from planned product work so that
 roadmap language never masquerades as shipped functionality.
