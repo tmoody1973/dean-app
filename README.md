@@ -282,14 +282,16 @@ thesis.
   lesson, learner SQL, adapted lesson, and display manifest before rebuilding
   the active module. The rebuilt module carries the observed mistake into a
   visual explanation and ends in the same deterministic SQL retry.
+- The desktop demo entry exposes the three curated tracks with their promised
+  depth and verification labels. During calibration, the workspace becomes an
+  animated seven-file curriculum tree; during adaptation, a visible
+  `hands-on → interactive` transition shows a readable lesson-file diff.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- A readable before/after curriculum-diff interface is not built yet; the
-  original and adapted snapshots are preserved for it.
 - Guardrails, scheduled review, deployment, and submission validation remain.
 - Workspace persistence has not been verified on deployed Vercel Sandbox.
 
@@ -406,12 +408,16 @@ On other platforms, visit [http://localhost:3000](http://localhost:3000).
 To confirm the complete hero journey and curated routing contract:
 
 1. Open a fresh page at `http://localhost:3000`.
-2. Enter `Data to Decision` and answer the three calibration questions. Confirm
-   exactly seven workspace files become visible before lesson 1 renders.
+2. Confirm the entry screen offers exactly the three approved tracks, labeling
+   Data to Decision as the complete hero and each other path as a focused
+   preview with its distinct verification label. Enter `Data to Decision` and
+   answer the three calibration questions. Confirm an animated tree shows the
+   seven workspace files before lesson 1 renders.
 3. Complete the framing relationships, deliberately submit the unchanged
    starter SQL query, and confirm Dean saves the original lesson, raw learner
    submission, adapted lesson, and display manifest before replacing the lesson
-   with a visual rebuild. Change the carried-forward query to calculate
+   with a visible `hands-on → interactive` transition and lesson-file diff.
+   Change the carried-forward query to calculate
    `revenue_dollars - spend_dollars`; confirm only that corrected query unlocks
    progression.
 4. Complete the visualization and recommendation relationship checks. Submit

@@ -3,7 +3,7 @@
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
 import { AlertCircleIcon } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { Fragment, useMemo, useRef } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -17,8 +17,17 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import type { GradeExerciseInput } from "@/lib/grading/contracts";
 import { projectGradeAttempts } from "@/lib/grading/grading-events";
+import { createDemoDisplay } from "@/lib/demo-display";
+import { getTrackSpec, type TrackId } from "@/lib/track-spec";
 import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
+import {
+  AdaptationMoment,
+  CurriculumBirth,
+  DemoComposerPrompt,
+  TrackPicker,
+  TrackSignal,
+} from "./demo-moments";
 
 const AGENT_NAME = "dean";
 
@@ -34,6 +43,8 @@ export function AgentChat() {
     () => projectGradeAttempts(agent.events),
     [agent.events],
   );
+  const demo = useMemo(() => createDemoDisplay(agent.data.messages), [agent.data.messages]);
+  const selectedTrack = getTrackSpec(demo.selectedTrackId);
 
   const handleExerciseSubmit = async (submission: GradeExerciseInput) => {
     await agent.send({
@@ -91,6 +102,11 @@ export function AgentChat() {
     await agent.send({ message: parts });
   };
 
+  const handleTrackSelect = async (trackId: TrackId, message: string) => {
+    if (isBusy) return;
+    await agent.send({ message });
+  };
+
   const composer = (
     <PromptInput onSubmit={handleSubmit}>
       <PromptInputTextarea placeholder="Send a message…" />
@@ -101,11 +117,12 @@ export function AgentChat() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       {isEmpty ? null : (
-        <header className="flex h-14 shrink-0 items-center justify-center gap-3 pl-4 pr-2">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-black/5 border-b px-4 sm:px-6 dark:border-white/8">
           <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-muted-foreground text-sm">{AGENT_NAME}</span>
+            <span className="font-semibold text-sm tracking-[-0.02em]">{AGENT_NAME}</span>
             <StatusDot status={agent.status} />
           </span>
+          {selectedTrack ? <TrackSignal track={selectedTrack} /> : null}
         </header>
       )}
 
@@ -125,20 +142,23 @@ export function AgentChat() {
         <Conversation className="min-h-0 flex-1">
           <ConversationContent className="mx-auto w-full max-w-3xl gap-6 px-4 py-6 sm:px-6">
             {agent.data.messages.map((message, index) => (
-              <AgentMessage
-                canRespond={!isBusy}
-                canCompleteModule={!isBusy}
-                canSubmitExercise={!isBusy}
-                gradeAttempts={gradeAttempts}
-                isStreaming={
-                  agent.status === "streaming" && index === agent.data.messages.length - 1
-                }
-                key={message.id}
-                message={message}
-                onExerciseSubmit={handleExerciseSubmit}
-                onInputResponses={(inputResponses) => agent.send({ inputResponses })}
-                onModuleComplete={handleModuleComplete}
-              />
+              <Fragment key={message.id}>
+                {demo.birthMessageIndex === index ? <CurriculumBirth writes={demo.birthWrites} /> : null}
+                {demo.adaptation?.messageIndex === index ? <AdaptationMoment adaptation={demo.adaptation} /> : null}
+                <AgentMessage
+                  canRespond={!isBusy}
+                  canCompleteModule={!isBusy}
+                  canSubmitExercise={!isBusy}
+                  gradeAttempts={gradeAttempts}
+                  isStreaming={
+                    agent.status === "streaming" && index === agent.data.messages.length - 1
+                  }
+                  message={message}
+                  onExerciseSubmit={handleExerciseSubmit}
+                  onInputResponses={(inputResponses) => agent.send({ inputResponses })}
+                  onModuleComplete={handleModuleComplete}
+                />
+              </Fragment>
             ))}
           </ConversationContent>
           <ConversationScrollButton />
@@ -154,11 +174,10 @@ export function AgentChat() {
         )}
       >
         {isEmpty ? (
-          <div className="flex flex-col items-center gap-3 text-center">
-            <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1>
-          </div>
+          <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
         ) : null}
         <div className="w-full">{composer}</div>
+        {isEmpty ? <DemoComposerPrompt /> : null}
       </div>
     </main>
   );
