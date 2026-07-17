@@ -44,7 +44,7 @@ export type AgentInputResponse = {
   readonly text?: string;
 };
 
-type EveFilePart = Extract<EveMessagePart, { type: "file"; }>;
+type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
 
 export function AgentMessage({
   canCompleteModule,
@@ -73,6 +73,7 @@ export function AgentMessage({
     (last, part, index) => (part.type === "text" ? index : last),
     -1,
   );
+  const workspaceWrites = collectWorkspaceWriteFiles(message.parts);
 
   return (
     <Message
@@ -80,6 +81,9 @@ export function AgentMessage({
       from={message.role}
     >
       <MessageContent>
+        {message.role === "assistant" && workspaceWrites.length > 0 ? (
+          <WorkspaceRouteUpdate files={workspaceWrites} />
+        ) : null}
         {message.parts.map((part, index) => (
           <AgentMessagePart
             canCompleteModule={canCompleteModule}
@@ -151,6 +155,10 @@ function AgentMessagePart({
         return null;
       }
 
+      if (isInternalWorkspaceTool(part.toolName)) {
+        return null;
+      }
+
       if (part.toolName === "render_module") {
         return part.state === "input-streaming" ? (
           <div
@@ -181,10 +189,6 @@ function AgentMessagePart({
         );
       }
 
-      if (part.toolName === "write_file") {
-        return <WorkspaceFileWrite part={part} />;
-      }
-
       return (
         <Tool
           defaultOpen={
@@ -212,72 +216,110 @@ function AgentMessagePart({
   }
 }
 
-function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart; }) {
-  const file = safeWorkspaceFile(part.input);
-  const state = workspaceWriteState(part.state);
-  const Icon =
-    state.kind === "completed"
-      ? CheckCircleIcon
-      : state.kind === "error"
-        ? XCircleIcon
-        : LoaderCircleIcon;
+type WorkspaceRouteFile = {
+  readonly basename: string;
+  readonly description: string;
+  readonly label: string;
+  readonly path: string;
+};
+
+function WorkspaceRouteUpdate({
+  files,
+}: {
+  readonly files: readonly WorkspaceRouteFile[];
+}) {
+  const previewFiles = files.slice(0, 4);
+  const extraCount = Math.max(0, files.length - previewFiles.length);
+  const hasLearnerWork = files.some((file) =>
+    file.path.includes("/artifacts/"),
+  );
+  const hasLessons = files.some(
+    (file) =>
+      file.path.includes("/lessons/") || file.path.endsWith("/curriculum.md"),
+  );
+  const title = hasLearnerWork
+    ? "Your work is saved"
+    : hasLessons
+      ? "Dean updated your learning route"
+      : "Dean updated your workspace";
+  const description = hasLearnerWork
+    ? "Your explanation is attached to the course record so the next step can use it."
+    : "Here is the learner-facing version of what changed, without the internal file log.";
 
   return (
-    <div
-      aria-live="polite"
-      className={cn(
-        "flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm",
-        state.kind === "completed"
-          ? "border-success/25 bg-success/5"
-          : state.kind === "error"
-            ? "border-destructive/25 bg-destructive/5"
-            : "border-primary/25 bg-primary/5",
-      )}
-      data-testid="workspace-file-write"
-      role="status"
+    <section
+      aria-label={title}
+      className="not-prose overflow-hidden rounded-xl border border-rule bg-card"
+      data-testid="workspace-route-update"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background/70">
-        <FileIcon aria-hidden="true" className="size-4 text-muted-foreground" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{file.basename}</span>
-        <code
-          className="block truncate text-muted-foreground text-xs"
-          title={file.path}
-        >
-          {file.path}
-        </code>
-      </span>
-      <span
-        className={cn(
-          "flex shrink-0 items-center gap-1.5 text-xs",
-          state.kind === "completed"
-            ? "text-success"
-            : state.kind === "error"
-              ? "text-destructive"
-              : "text-primary",
-        )}
-      >
-        <Icon
-          aria-hidden="true"
-          className={cn(
-            "size-3.5",
-            state.kind === "streaming" &&
-            "animate-spin motion-reduce:animate-none",
-          )}
-        />
-        {state.label}
-      </span>
-    </div>
+      <div className="border-b bg-primary/5 px-4 py-4 sm:px-5">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <CheckCircleIcon aria-hidden="true" className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold">{title}</p>
+            <p className="mt-1 text-muted-foreground text-sm leading-6">
+              {description}
+            </p>
+          </div>
+        </div>
+      </div>
+      <ol className="divide-y">
+        {previewFiles.map((file) => (
+          <li
+            className="flex items-start gap-3 px-4 py-3 sm:px-5"
+            key={file.path}
+          >
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <FileIcon aria-hidden="true" className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-sm">{file.label}</span>
+              <span className="mt-0.5 block text-muted-foreground text-sm">
+                {file.description}
+              </span>
+            </span>
+            <span className="mt-1 shrink-0 text-primary text-xs">Ready</span>
+          </li>
+        ))}
+      </ol>
+      {extraCount > 0 ? (
+        <p className="border-t px-4 py-3 text-muted-foreground text-xs sm:px-5">
+          Plus {extraCount} supporting workspace update
+          {extraCount === 1 ? "" : "s"}.
+        </p>
+      ) : null}
+    </section>
   );
 }
 
-function safeWorkspaceFile(input: unknown): {
-  readonly basename: string;
-  readonly path: string;
-} {
+function collectWorkspaceWriteFiles(
+  parts: readonly EveMessagePart[],
+): readonly WorkspaceRouteFile[] {
+  const files = new Map<string, WorkspaceRouteFile>();
+
+  for (const part of parts) {
+    if (part.type !== "dynamic-tool" || part.toolName !== "write_file") {
+      continue;
+    }
+
+    const file = safeWorkspaceFile(part.input);
+    if (file.path === "/workspace/…") continue;
+    files.set(file.path, file);
+  }
+
+  return [...files.values()];
+}
+
+function safeWorkspaceFile(input: unknown): WorkspaceRouteFile {
   if (!isRecord(input) || typeof input.filePath !== "string") {
-    return { basename: "Workspace file", path: "/workspace/…" };
+    return {
+      basename: "Workspace file",
+      description: "A supporting workspace file changed.",
+      label: "Workspace update",
+      path: "/workspace/…",
+    };
   }
 
   const rawPath = input.filePath.trim();
@@ -285,7 +327,12 @@ function safeWorkspaceFile(input: unknown): {
     !rawPath.startsWith("/workspace/") ||
     /[\\\u0000-\u001f\u007f]/u.test(rawPath)
   ) {
-    return { basename: "Workspace file", path: "/workspace/…" };
+    return {
+      basename: "Workspace file",
+      description: "A supporting workspace file changed.",
+      label: "Workspace update",
+      path: "/workspace/…",
+    };
   }
 
   const segments: string[] = [];
@@ -293,7 +340,12 @@ function safeWorkspaceFile(input: unknown): {
     if (segment === "" || segment === ".") continue;
     if (segment === "..") {
       if (segments.length === 0) {
-        return { basename: "Workspace file", path: "/workspace/…" };
+        return {
+          basename: "Workspace file",
+          description: "A supporting workspace file changed.",
+          label: "Workspace update",
+          path: "/workspace/…",
+        };
       }
       segments.pop();
       continue;
@@ -302,32 +354,86 @@ function safeWorkspaceFile(input: unknown): {
   }
 
   if (segments.length === 0) {
-    return { basename: "Workspace file", path: "/workspace/…" };
+    return {
+      basename: "Workspace file",
+      description: "A supporting workspace file changed.",
+      label: "Workspace update",
+      path: "/workspace/…",
+    };
   }
 
+  const path = `/workspace/${segments.join("/")}`;
+  const basename = segments.at(-1) ?? "Workspace file";
+
   return {
-    basename: segments.at(-1) ?? "Workspace file",
-    path: `/workspace/${segments.join("/")}`,
+    basename,
+    description: workspaceFileDescription(path, basename),
+    label: workspaceFileLabel(path, basename),
+    path,
   };
 }
 
-function workspaceWriteState(state: EveDynamicToolPart["state"]): {
-  readonly kind: "streaming" | "completed" | "error";
-  readonly label: string;
-} {
-  if (state === "output-available")
-    return { kind: "completed", label: "Written" };
-  if (state === "output-error" || state === "output-denied") {
-    return { kind: "error", label: "Write failed" };
+function workspaceFileLabel(path: string, basename: string): string {
+  if (path.endsWith("/curriculum.md")) return "Learning route";
+  if (path.endsWith("/session.md")) return "Session memory";
+  if (path.endsWith("/learner-profile.md")) return "Learner profile";
+  if (path.includes("/lessons/")) return readableName(basename);
+  if (path.includes("/revisions/")) return "Adaptation record";
+  if (path.includes("/artifacts/") && basename === "LEARNER-EXPLANATION.md") {
+    return "Learner explanation";
   }
-  return { kind: "streaming", label: "Writing" };
+  if (path.includes("/artifacts/")) return readableName(basename);
+  return readableName(basename);
+}
+
+function workspaceFileDescription(path: string, basename: string): string {
+  if (path.endsWith("/curriculum.md")) {
+    return "The course map, current lesson, and completion state.";
+  }
+  if (path.endsWith("/session.md")) {
+    return "The state Dean uses to choose the next useful step.";
+  }
+  if (path.endsWith("/learner-profile.md")) {
+    return "Your goal, context, and learning preferences.";
+  }
+  if (path.includes("/lessons/")) {
+    return "A learner-facing lesson Dean can render and check.";
+  }
+  if (path.includes("/revisions/")) {
+    return "Evidence for how Dean adapted the route.";
+  }
+  if (path.includes("/artifacts/") && basename === "LEARNER-EXPLANATION.md") {
+    return "Your explanation, saved verbatim for the course record.";
+  }
+  if (path.includes("/artifacts/")) {
+    return "A saved output from your work in this path.";
+  }
+  return "A supporting workspace file changed.";
+}
+
+function readableName(value: string): string {
+  return value
+    .replace(/\.md$/u, "")
+    .split(/[-_]/u)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function isInternalWorkspaceTool(toolName: string): boolean {
+  return (
+    toolName === "write_file" ||
+    toolName === "read_file" ||
+    toolName === "list_files" ||
+    toolName === "list_directory"
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function AttachmentPart({ part }: { readonly part: EveFilePart; }) {
+function AttachmentPart({ part }: { readonly part: EveFilePart }) {
   const label = part.filename ?? "Attachment";
   const detail = [part.mediaType, formatBytes(part.size)]
     .filter(Boolean)

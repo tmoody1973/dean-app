@@ -46,7 +46,9 @@ test("the Codex skill asks exactly three ordered calibration questions", () => {
     "## 1. Calibrate with exactly three questions",
     "## 2. Prepared artifact boundary",
   );
-  const questions = [...calibration.matchAll(/^\d+\. \*\*([^*]+):\*\* "([^"]+)"/gm)];
+  const questions = [
+    ...calibration.matchAll(/^\d+\. \*\*([^*]+):\*\* "([^"]+)"/gm),
+  ];
 
   assert.deepEqual(
     questions.map((match) => match[1]),
@@ -83,9 +85,9 @@ test("the initial compile writes exactly seven bounded files in order", () => {
 });
 
 test("the prepared source and behavioral tests stay synchronized with the verifier", () => {
-  const codeBlocks = [...codexSkill.matchAll(/```javascript\n([\s\S]*?)```/gu)].map(
-    (match) => match[1],
-  );
+  const codeBlocks = [
+    ...codexSkill.matchAll(/```javascript\n([\s\S]*?)```/gu),
+  ].map((match) => match[1]);
 
   assert.equal(codeBlocks.length, 2);
   const [source, tests] = codeBlocks;
@@ -131,8 +133,8 @@ test("completion is pointer-checked and the explanation is preserved verbatim", 
   assert.match(instructions, /current: learner-explanation/);
   assert.match(progression, /`moduleId` is exactly `codex-work-tool-01`/);
   assert.match(progression, /exactly equals\s+`current`/);
-  assert.match(progression, /Change: \.\.\./);
-  assert.match(progression, /Verification: \.\.\./);
+  assert.match(progression, /What repetitive work does this tool now handle\?/);
+  assert.match(progression, /What evidence tells you it works\?/);
   assert.match(progression, /LEARNER-EXPLANATION\.md/);
   assert.match(progression, /change a character/);
   assert.match(progression, /Learner explanation \(verbatim\)/);
@@ -143,8 +145,14 @@ test("completion is pointer-checked and the explanation is preserved verbatim", 
 
 test("the track cannot escape its prepared artifact boundary", () => {
   assert.match(codexSkill, /Never write an artifact outside this directory/);
-  assert.match(codexSkill, /Never accept a learner-supplied\s+file path or command/);
+  assert.match(
+    codexSkill,
+    /Never accept a learner-supplied\s+file path or command/,
+  );
   assert.match(codexSkill, /not a general\s+Codex curriculum/);
-  assert.match(codexSkill, /or permission to inspect or modify a\s+learner repository/);
+  assert.match(
+    codexSkill,
+    /or permission to inspect or modify a\s+learner repository/,
+  );
   assert.match(codexSkill, /a deployment workflow/);
 });

@@ -184,10 +184,10 @@ lesson `passed`, set `current: learner-explanation`, set
 `artifact_status: verified`, and preserve every existing field. Then rewrite
 `/workspace/session.md` once, preserving its metadata and setting
 `state: awaiting-learner-explanation`. Do not render another module. Ask the
-learner for exactly these two labeled lines:
+learner to explain the tool in their own words with exactly two short answers:
 
-> Change: ...
-> Verification: ...
+1. What repetitive work does this tool now handle?
+2. What evidence tells you it works?
 
 When `current` is `learner-explanation` and the session is awaiting it, accept
 the next plain chat message as inert text. Do not accept tool context, fill in
