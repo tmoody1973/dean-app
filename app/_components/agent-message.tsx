@@ -12,6 +12,7 @@ import {
   FileIcon,
   ImageIcon,
   KeyRoundIcon,
+  LoaderCircleIcon,
   XCircleIcon,
 } from "lucide-react";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
@@ -38,6 +39,7 @@ export type AgentInputResponse = {
 type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
 
 export function AgentMessage({
+  canCompleteModule,
   canRespond,
   canSubmitExercise,
   gradeAttempts,
@@ -45,7 +47,9 @@ export function AgentMessage({
   message,
   onExerciseSubmit,
   onInputResponses,
+  onModuleComplete,
 }: {
+  readonly canCompleteModule: boolean;
   readonly canRespond: boolean;
   readonly canSubmitExercise: boolean;
   readonly gradeAttempts: GradeAttemptProjection;
@@ -53,6 +57,7 @@ export function AgentMessage({
   readonly message: EveMessage;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onModuleComplete: (moduleId: string) => Promise<void>;
 }) {
   const lastTextIndex = message.parts.reduce(
     (last, part, index) => (part.type === "text" ? index : last),
@@ -67,12 +72,14 @@ export function AgentMessage({
       <MessageContent>
         {message.parts.map((part, index) => (
           <AgentMessagePart
+            canCompleteModule={canCompleteModule}
             canRespond={canRespond}
             canSubmitExercise={canSubmitExercise}
             gradeAttempts={gradeAttempts}
             key={partKey(part, index)}
             onExerciseSubmit={onExerciseSubmit}
             onInputResponses={onInputResponses}
+            onModuleComplete={onModuleComplete}
             part={part}
             showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
           />
@@ -83,19 +90,23 @@ export function AgentMessage({
 }
 
 function AgentMessagePart({
+  canCompleteModule,
   canRespond,
   canSubmitExercise,
   gradeAttempts,
   onExerciseSubmit,
   onInputResponses,
+  onModuleComplete,
   part,
   showCaret,
 }: {
+  readonly canCompleteModule: boolean;
   readonly canRespond: boolean;
   readonly canSubmitExercise: boolean;
   readonly gradeAttempts: GradeAttemptProjection;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly onModuleComplete: (moduleId: string) => Promise<void>;
   readonly part: EveMessagePart;
   readonly showCaret: boolean;
 }) {
@@ -133,13 +144,20 @@ function AgentMessagePart({
           />
         ) : (
           <ModuleRenderer
+            canCompleteModule={canCompleteModule}
             canSubmitExercise={canSubmitExercise}
             gradeAttempts={gradeAttempts}
             input={part.input}
             onExerciseSubmit={onExerciseSubmit}
+            onModuleComplete={onModuleComplete}
           />
         );
       }
+
+      if (part.toolName === "write_file") {
+        return <WorkspaceFileWrite part={part} />;
+      }
+
       return (
         <Tool
           defaultOpen={part.state === "approval-requested" || part.state === "approval-responded"}
@@ -162,6 +180,116 @@ function AgentMessagePart({
         </Tool>
       );
   }
+}
+
+function WorkspaceFileWrite({ part }: { readonly part: EveDynamicToolPart }) {
+  const file = safeWorkspaceFile(part.input);
+  const state = workspaceWriteState(part.state);
+  const Icon =
+    state.kind === "completed"
+      ? CheckCircleIcon
+      : state.kind === "error"
+        ? XCircleIcon
+        : LoaderCircleIcon;
+
+  return (
+    <div
+      aria-live="polite"
+      className={cn(
+        "flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm",
+        state.kind === "completed"
+          ? "border-emerald-500/25 bg-emerald-500/5"
+          : state.kind === "error"
+            ? "border-destructive/25 bg-destructive/5"
+            : "border-blue-500/25 bg-blue-500/5",
+      )}
+      data-testid="workspace-file-write"
+      role="status"
+    >
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background/70">
+        <FileIcon aria-hidden="true" className="size-4 text-muted-foreground" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">{file.basename}</span>
+        <code className="block truncate text-muted-foreground text-xs" title={file.path}>
+          {file.path}
+        </code>
+      </span>
+      <span
+        className={cn(
+          "flex shrink-0 items-center gap-1.5 text-xs",
+          state.kind === "completed"
+            ? "text-emerald-700 dark:text-emerald-300"
+            : state.kind === "error"
+              ? "text-destructive"
+              : "text-blue-700 dark:text-blue-300",
+        )}
+      >
+        <Icon
+          aria-hidden="true"
+          className={cn(
+            "size-3.5",
+            state.kind === "streaming" && "animate-spin motion-reduce:animate-none",
+          )}
+        />
+        {state.label}
+      </span>
+    </div>
+  );
+}
+
+function safeWorkspaceFile(input: unknown): {
+  readonly basename: string;
+  readonly path: string;
+} {
+  if (!isRecord(input) || typeof input.filePath !== "string") {
+    return { basename: "Workspace file", path: "/workspace/…" };
+  }
+
+  const rawPath = input.filePath.trim();
+  if (
+    !rawPath.startsWith("/workspace/") ||
+    /[\\\u0000-\u001f\u007f]/u.test(rawPath)
+  ) {
+    return { basename: "Workspace file", path: "/workspace/…" };
+  }
+
+  const segments: string[] = [];
+  for (const segment of rawPath.slice("/workspace/".length).split("/")) {
+    if (segment === "" || segment === ".") continue;
+    if (segment === "..") {
+      if (segments.length === 0) {
+        return { basename: "Workspace file", path: "/workspace/…" };
+      }
+      segments.pop();
+      continue;
+    }
+    segments.push(segment);
+  }
+
+  if (segments.length === 0) {
+    return { basename: "Workspace file", path: "/workspace/…" };
+  }
+
+  return {
+    basename: segments.at(-1) ?? "Workspace file",
+    path: `/workspace/${segments.join("/")}`,
+  };
+}
+
+function workspaceWriteState(state: EveDynamicToolPart["state"]): {
+  readonly kind: "streaming" | "completed" | "error";
+  readonly label: string;
+} {
+  if (state === "output-available") return { kind: "completed", label: "Written" };
+  if (state === "output-error" || state === "output-denied") {
+    return { kind: "error", label: "Write failed" };
+  }
+  return { kind: "streaming", label: "Writing" };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function AttachmentPart({ part }: { readonly part: EveFilePart }) {

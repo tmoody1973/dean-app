@@ -4,6 +4,7 @@ import { CheckCircleIcon, CircleXIcon, RotateCcwIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { checkDeclaredRelationships } from "@/lib/grading/structural-relationships";
 import type { LearningModuleT } from "@/lib/module-spec";
 
 type DragMatch = Extract<
@@ -27,10 +28,9 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
     () => block.pairs.map((_, index) => (index + 1) % block.pairs.length),
     [block.pairs],
   );
-  const allMatched = assignments.every((assignment) => assignment !== null);
-  const correctCount = assignments.reduce<number>(
-    (count, rightIndex, leftIndex) => count + (rightIndex === leftIndex ? 1 : 0),
-    0,
+  const relationshipCheck = checkDeclaredRelationships(
+    assignments,
+    block.pairs.length,
   );
 
   const chooseRight = (rightIndex: number) => {
@@ -47,11 +47,11 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
   };
 
   const checkMatches = () => {
-    if (!allMatched) return;
+    if (!relationshipCheck.complete) return;
 
     setChecked(true);
     setSelectedLeft(null);
-    onCheckedChange(true);
+    onCheckedChange(relationshipCheck.satisfied);
   };
 
   const tryAgain = () => {
@@ -69,6 +69,9 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
       <p className="text-pretty text-lg leading-8">{block.prompt}</p>
       <p className="mt-3 text-muted-foreground text-sm">
         Choose an item on the left, then choose its match on the right.
+      </p>
+      <p className="mt-2 text-muted-foreground text-sm">
+        Required criterion: every declared relationship must match before you can continue.
       </p>
 
       <div
@@ -145,13 +148,13 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
         <div className="mt-6">
           <Button
             className="h-11 rounded-xl bg-[#2753c7] px-6 text-white hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
-            disabled={!allMatched}
+            disabled={!relationshipCheck.complete}
             onClick={checkMatches}
             type="button"
           >
             Check
           </Button>
-          {!allMatched ? (
+          {!relationshipCheck.complete ? (
             <p className="mt-2 text-muted-foreground text-xs">
               Match every item before checking.
             </p>
@@ -160,16 +163,23 @@ export function DragMatchBlock({ block, onCheckedChange }: DragMatchBlockProps) 
       ) : (
         <div className="mt-6 rounded-xl border bg-muted/40 p-4" role="status">
           <div className="flex gap-3 text-sm leading-6">
-            {correctCount === block.pairs.length ? (
+            {relationshipCheck.satisfied ? (
               <CheckCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             ) : (
               <CircleXIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             )}
             <div>
               <p className="font-medium">
-                Practice check: {correctCount} of {block.pairs.length} matches correct.
+                Relationship check: {relationshipCheck.correctCount} of {relationshipCheck.requiredCount} required matches correct.
               </p>
-              <p className="text-muted-foreground">This practice result is not recorded.</p>
+              <p className="text-muted-foreground">
+                {relationshipCheck.satisfied
+                  ? "The declared relationships are structurally satisfied."
+                  : "All declared relationships are required to continue."}
+              </p>
+              <p className="mt-1 text-muted-foreground text-xs">
+                This structural check does not judge broader semantic correctness.
+              </p>
               <Button
                 className="mt-2 h-auto px-0 py-1"
                 onClick={tryAgain}

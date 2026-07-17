@@ -21,12 +21,13 @@ The core idea is simple:
 > [!IMPORTANT]
 > This repository contains the verified **Day 1 foundation**, the approved
 > three-track Build Week routing contract, and the core Day 2 interaction
-> infrastructure. The running agent can select and scaffold exactly those three
-> tracks, validated lessons render through a safe one-block shell backed by all
-> seven approved interactive components, and supported SQL exercises now use
-> authoritative deterministic grading events. Hero track content, adaptation
-> UI, and deployment remain planned work. See [Current status](#current-status)
-> for the exact boundary.
+> infrastructure. The complete Data to Decision hero now runs from three-question
+> calibration through four interactive lessons to a saved recommendation
+> artifact. Validated lessons render through a safe one-block shell backed by all
+> seven approved interactive components, and supported SQL exercises use
+> authoritative deterministic grading events. Failure-driven rewriting, the two
+> secondary-track experiences, and deployment remain planned work. See
+> [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
 
@@ -122,7 +123,8 @@ tracks. It does not promise arbitrary “learn anything” behavior.
 
 The hero journey covers business-question framing, SQL-based retrieval,
 visualization interpretation, recommendation writing, deterministic checks,
-failure-driven adaptation, and a visible curriculum change.
+structural relationship checks, visible curriculum progression, and a saved
+decision artifact.
 
 ### Build a Work Tool with Codex
 
@@ -236,13 +238,23 @@ thesis.
 - Local browser acceptance covers grader errors, deterministic failure and
   hints, passing unlocks, and parity between the displayed state and raw eve
   action events.
+- The complete Data to Decision hero passes a fresh Maya browser journey:
+  exactly three calibration questions, seven ordered workspace writes, four
+  domain-personalized lessons, deliberate structural and SQL failures, verified
+  recovery, module-by-module curriculum progression, and a concrete final
+  recommendation artifact.
+- Structural relationship exercises fail closed and unlock progression only
+  when every declared pair matches. The UI explicitly describes this as a
+  structural check rather than a semantic judgment.
+- Completing the recommendation lesson advances the workspace into artifact
+  collection; the next learner message is preserved verbatim alongside the
+  separately sourced business question and canonical evidence.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- The complete Data to Decision journey has not passed browser acceptance.
 - The Codex artifact lesson and Executive Communication preview are not built.
 - Failure-driven rewriting and the visible curriculum diff are not built.
 - Guardrails, scheduled review, deployment, and submission validation remain.
@@ -358,14 +370,20 @@ On other platforms, visit [http://localhost:3000](http://localhost:3000).
 
 ## Smoke test the current baseline
 
-To confirm the curated routing contract:
+To confirm the complete hero journey and curated routing contract:
 
 1. Open a fresh page at `http://localhost:3000`.
-2. Enter `Data to Decision` and confirm Dean begins that track's three-question
-   calibration rather than teaching immediately.
-3. In another fresh session, enter an unsupported goal such as `Teach me
+2. Enter `Data to Decision` and answer the three calibration questions. Confirm
+   exactly seven workspace files become visible before lesson 1 renders.
+3. Complete the framing relationships, deliberately fail the starter SQL query,
+   then change it to calculate `revenue_dollars - spend_dollars`. Confirm only
+   the corrected query unlocks progression.
+4. Complete the visualization and recommendation relationship checks. Submit
+   the requested four labeled recommendation lines and confirm
+   `/workspace/artifacts/recommendation.md` is written.
+5. In another fresh session, enter an unsupported goal such as `Teach me
    conversational French`.
-4. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
+6. Confirm Dean offers only Data to Decision, Build a Work Tool with Codex, and
    Executive Communication, with no freeform subject option.
 
 Stop the server with `Ctrl+C`.
@@ -381,6 +399,7 @@ Stop the server with `Ctrl+C`.
 │   ├── lib/learner-session.ts            # Durable selected-track state
 │   ├── skills/
 │   │   ├── adapt-on-failure.md          # Recovery playbook
+│   │   ├── data-to-decision-hero.md     # Complete hero journey contract
 │   │   └── dean-generate-curriculum.md  # Calibration and curriculum playbook
 │   └── tools/
 │       ├── render_module.ts              # Typed lesson-delivery boundary
@@ -394,6 +413,7 @@ Stop the server with `Ctrl+C`.
 │   ├── dean-product-brief-and-prd.md     # Product brief and requirements
 │   └── spike-findings.md                # Verified platform evidence
 ├── lib/
+│   ├── grading/                          # Deterministic and structural checks
 │   ├── module-spec.ts                   # Schema, parser, fallback, and example
 │   └── track-spec.ts                    # Canonical tracks and verification tiers
 ├── tests/track-spec.test.ts             # Track-contract regression tests
@@ -421,7 +441,8 @@ Stop the server with `Ctrl+C`.
   Build a Work Tool with Codex, and Executive Communication. Arbitrary subjects
   remain outside the active milestone.
 - **Current runtime truth.** Routing and curriculum scaffolds exist for the
-  three approved tracks; their complete learning content remains unbuilt.
+  three approved tracks. Data to Decision is complete; the two secondary tracks
+  remain bounded previews rather than complete learning journeys.
 - **Typed rendering only.** The model emits registry data, never raw generated
   JSX or HTML.
 - **No `dangerouslySetInnerHTML`.** Markdown must not create an HTML injection

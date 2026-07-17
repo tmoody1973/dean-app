@@ -1,11 +1,11 @@
 ---
-description: Use when a new learner starts and /workspace/curriculum.md does not exist. Selects one approved track, calibrates it, and writes a track-aware curriculum scaffold to the workspace.
+description: Use when a new learner starts and /workspace/curriculum.md does not exist. Selects one approved track, then delegates to its bounded curriculum compiler.
 ---
 
 # Dean phase: compile the teacher
 
-This skill routes and scaffolds the three approved Build Week tracks. It does
-not create their full lesson content.
+This skill routes the three approved Build Week tracks. Data to Decision is the
+complete hero journey; the other two tracks remain bounded previews.
 
 ## Step 0 — Resolve the track before calibration
 
@@ -29,16 +29,20 @@ For an unsupported or ambiguous request, call `ask_question` exactly as the
 global instructions require and stop until the learner chooses. Do not infer a
 track from an arbitrary subject, write any file, or call `render_module`.
 
-## Step 1 — Calibrate (exactly 3 questions, one message each)
+## Step 1 — Delegate or calibrate
 
-Ask the three questions for the selected track, in order, waiting for each
-answer.
+### Data to Decision — complete hero
 
-### Data to Decision
+Load the data-to-decision-hero skill immediately. It is the sole authority for
+the Data to Decision calibration questions, file-writing choreography, lesson
+contracts, progression, and final recommendation artifact. Do not ask any Data
+to Decision calibration question from this routing skill and do not add a
+fourth calibration question.
 
-1. **Outcome:** "What campaign or business decision do you need your data to support?"
-2. **Anchor:** "What do you already use for this work — spreadsheets, dashboards, a CRM, SQL, or something else?"
-3. **Reality check:** Show one tiny campaign table and ask what comparison they would make first. Use the answer to set `intro` or `core` difficulty.
+### Preview tracks — exactly 3 questions, one message each
+
+For either preview track, ask its three questions in order, one message at a
+time, waiting for each answer.
 
 ### Build a Work Tool with Codex
 
@@ -52,7 +56,10 @@ answer.
 2. **Anchor:** "What are the stakes, and what context does that audience already have?"
 3. **Reality check:** Ask for the one sentence they would say today. Use its clarity to set `intro` or `core` difficulty; never call the result passed or verified mastery.
 
-## Step 2 — Write the curriculum scaffold to /workspace
+## Step 2 — Write a preview curriculum to /workspace
+
+This step applies only to Build a Work Tool with Codex and Executive
+Communication. Data to Decision uses the hero skill's seven-file contract.
 
 Write these files with `write_file`, ONE FILE PER CALL, in this exact order.
 The frontend streams each write as it happens, so order is choreography.
@@ -69,7 +76,6 @@ The frontend streams each write as it happens, so order is choreography.
 3. `/workspace/curriculum.md`
    - Repeat `track_id`, `track`, and `verification_tiers` exactly at the top.
    - Add `current: 01-preview` and an outcome-level map for the selected track:
-     - Data to Decision: frame the question → retrieve with SQL → interpret a visualization → write a recommendation.
      - Build a Work Tool with Codex: define the repetitive task → write acceptance criteria → build the smallest useful artifact → verify and explain it.
      - Executive Communication: identify audience and stakes → practice one leadership scenario → revise against a visible judgment-supported rubric.
    - Give each map item a one-line outcome, modality, difficulty, and status
@@ -80,9 +86,11 @@ The frontend streams each write as it happens, so order is choreography.
      planned `explain` block that confirms the route. Label it explicitly as a
      routing preview; later issues own full lesson content.
 
-## Step 3 — Hand off with a routing preview
+## Step 3 — Hand off preview tracks with a routing preview
 
-After the last file writes, call `render_module` with one valid `explain` block
+This step applies only to Build a Work Tool with Codex and Executive
+Communication. After the last preview file writes, call `render_module` with
+one valid `explain` block
 that names the selected track, shows its verification label, and previews the
 outcome map. This is a routing confirmation, not a full lesson. Then say at
 most one short sentence.

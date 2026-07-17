@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, LoaderCircleIcon, RotateCcwIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { BlockRenderer } from "@/components/module/BlockRenderer";
@@ -18,17 +18,21 @@ const FALLBACK_MARKDOWN =
   "Review the current concept in plain language, then continue when you are ready.";
 
 type ModuleRendererProps = {
+  readonly canCompleteModule: boolean;
   readonly canSubmitExercise: boolean;
   readonly gradeAttempts: GradeAttemptProjection;
   readonly input: unknown;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
+  readonly onModuleComplete: (moduleId: string) => Promise<void>;
 };
 
 export function ModuleRenderer({
+  canCompleteModule,
   canSubmitExercise,
   gradeAttempts,
   input,
   onExerciseSubmit,
+  onModuleComplete,
 }: ModuleRendererProps) {
   const module = useMemo(() => {
     const parsed = parseModule(input);
@@ -43,28 +47,39 @@ export function ModuleRenderer({
 
   return (
     <ModuleShell
+      canCompleteModule={canCompleteModule}
       canSubmitExercise={canSubmitExercise}
       gradeAttempts={gradeAttempts}
       key={moduleRevision(module)}
       module={module}
       onExerciseSubmit={onExerciseSubmit}
+      onModuleComplete={onModuleComplete}
     />
   );
 }
 
 function ModuleShell({
+  canCompleteModule,
   canSubmitExercise,
   gradeAttempts,
   module,
   onExerciseSubmit,
+  onModuleComplete,
 }: {
+  readonly canCompleteModule: boolean;
   readonly canSubmitExercise: boolean;
   readonly gradeAttempts: GradeAttemptProjection;
   readonly module: LearningModuleT;
   readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
+  readonly onModuleComplete: (moduleId: string) => Promise<void>;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interactionReady, setInteractionReady] = useState(false);
+  const [completionState, setCompletionState] = useState<
+    "idle" | "pending" | "completed" | "error"
+  >("idle");
+  const completionInFlight = useRef(false);
+  const completionSucceeded = useRef(false);
   const stepRef = useRef<HTMLDivElement>(null);
   const shouldFocusStep = useRef(false);
   const currentBlock = module.blocks[currentIndex];
@@ -89,6 +104,28 @@ function ModuleShell({
     shouldFocusStep.current = true;
     setInteractionReady(false);
     setCurrentIndex((index) => Math.min(index + 1, totalSteps - 1));
+  };
+
+  const completeModule = async () => {
+    if (
+      !canCompleteModule ||
+      completionInFlight.current ||
+      completionSucceeded.current
+    ) {
+      return;
+    }
+
+    completionInFlight.current = true;
+    setCompletionState("pending");
+    try {
+      await onModuleComplete(module.id);
+      completionSucceeded.current = true;
+      setCompletionState("completed");
+    } catch {
+      setCompletionState("error");
+    } finally {
+      completionInFlight.current = false;
+    }
   };
 
   return (
@@ -159,19 +196,50 @@ function ModuleShell({
         />
       </div>
 
-      <footer className="flex border-black/8 border-t px-5 py-4 sm:justify-end sm:px-10 sm:py-5 dark:border-white/10">
+      <footer className="flex flex-col gap-2 border-black/8 border-t px-5 py-4 sm:items-end sm:px-10 sm:py-5 dark:border-white/10">
         {mayContinue ? (
           <Button
             className="h-11 w-full rounded-xl bg-[#2753c7] px-6 text-white shadow-none hover:bg-[#2146a8] focus-visible:border-[#2753c7] focus-visible:ring-[#2753c7]/35 sm:w-auto dark:bg-[#8aabff] dark:text-slate-950 dark:hover:bg-[#9bb7ff] dark:focus-visible:border-[#8aabff] dark:focus-visible:ring-[#8aabff]/40"
-            disabled={isComplete}
-            onClick={continueLesson}
+            disabled={
+              isComplete &&
+              (!canCompleteModule ||
+                completionState === "pending" ||
+                completionState === "completed")
+            }
+            onClick={() => {
+              if (isComplete) {
+                void completeModule();
+                return;
+              }
+              continueLesson();
+            }}
             type="button"
           >
             {isComplete ? (
-              <>
-                <CheckIcon aria-hidden="true" />
-                Done
-              </>
+              completionState === "pending" ? (
+                <>
+                  <LoaderCircleIcon
+                    aria-hidden="true"
+                    className="animate-spin motion-reduce:animate-none"
+                  />
+                  Continuing…
+                </>
+              ) : completionState === "error" ? (
+                <>
+                  <RotateCcwIcon aria-hidden="true" />
+                  Try again
+                </>
+              ) : completionState === "completed" ? (
+                <>
+                  <CheckIcon aria-hidden="true" />
+                  Complete
+                </>
+              ) : (
+                <>
+                  <CheckIcon aria-hidden="true" />
+                  Done
+                </>
+              )
             ) : (
               <>
                 Continue
@@ -184,6 +252,11 @@ function ModuleShell({
             Complete this interaction to continue.
           </p>
         )}
+        {isComplete && completionState === "error" ? (
+          <p className="text-destructive text-sm" role="alert">
+            Couldn’t continue the lesson. Try again.
+          </p>
+        ) : null}
       </footer>
     </section>
   );

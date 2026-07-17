@@ -3,7 +3,7 @@
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
 import { AlertCircleIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -26,6 +26,8 @@ type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
 export function AgentChat() {
   const agent = useEveAgent();
+  const completedModuleIds = useRef(new Set<string>());
+  const completingModuleIds = useRef(new Set<string>());
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
   const isEmpty = agent.data.messages.length === 0;
   const gradeAttempts = useMemo(
@@ -41,6 +43,27 @@ export function AgentChat() {
         submission,
       },
     });
+  };
+
+  const handleModuleComplete = async (moduleId: string) => {
+    if (completedModuleIds.current.has(moduleId)) return;
+    if (isBusy || completingModuleIds.current.has(moduleId)) {
+      throw new Error("A request is already in progress.");
+    }
+
+    completingModuleIds.current.add(moduleId);
+    try {
+      await agent.send({
+        message: "Continue my current learning path.",
+        clientContext: {
+          type: "dean.module-completion.v1",
+          moduleId,
+        },
+      });
+      completedModuleIds.current.add(moduleId);
+    } finally {
+      completingModuleIds.current.delete(moduleId);
+    }
   };
 
   const handleSubmit = async (message: PromptInputMessage) => {
@@ -104,6 +127,7 @@ export function AgentChat() {
             {agent.data.messages.map((message, index) => (
               <AgentMessage
                 canRespond={!isBusy}
+                canCompleteModule={!isBusy}
                 canSubmitExercise={!isBusy}
                 gradeAttempts={gradeAttempts}
                 isStreaming={
@@ -113,6 +137,7 @@ export function AgentChat() {
                 message={message}
                 onExerciseSubmit={handleExerciseSubmit}
                 onInputResponses={(inputResponses) => agent.send({ inputResponses })}
+                onModuleComplete={handleModuleComplete}
               />
             ))}
           </ConversationContent>
