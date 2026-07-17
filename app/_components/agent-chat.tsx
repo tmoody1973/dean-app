@@ -55,6 +55,7 @@ import { AgentMessage } from "./agent-message";
 import {
   AdaptationMoment,
   CurriculumBirth,
+  DemoCapabilities,
   DemoComposerPrompt,
   TrackPicker,
   TrackSignal,
@@ -233,6 +234,7 @@ function LearningSession({
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6 sm:py-12">
           <>
             <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
+            <DemoCapabilities />
             <ScheduledReviewNotice />
           </>
           <div className="w-full">{composer}</div>

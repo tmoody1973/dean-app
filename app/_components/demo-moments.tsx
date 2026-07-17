@@ -2,10 +2,13 @@
 
 import {
   ArrowRightIcon,
+  BookCheckIcon,
   CheckCircle2Icon,
   FileCode2Icon,
   FileTextIcon,
   GitCompareArrowsIcon,
+  GraduationCapIcon,
+  ListChecksIcon,
   SparklesIcon,
 } from "lucide-react";
 import type { AdaptationDisplay, WorkspaceWrite } from "@/lib/demo-display";
@@ -64,6 +67,84 @@ export function TrackPicker({
         generation yet.
       </p>
     </section>
+  );
+}
+
+export function DemoCapabilities() {
+  return (
+    <section
+      aria-labelledby="dean-capabilities-title"
+      className="grid w-full max-w-6xl gap-3 md:grid-cols-[1fr_1fr_1fr]"
+    >
+      <div className="rounded-xl border border-rule bg-card/88 p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <GraduationCapIcon aria-hidden="true" className="size-4" />
+          </span>
+          <div>
+            <p
+              className="font-semibold tracking-[-0.02em]"
+              id="dean-capabilities-title"
+            >
+              What works today
+            </p>
+            <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
+              <CapabilityItem text="Pick one of three prepared tutor paths." />
+              <CapabilityItem text="Answer calibration questions so Dean can build a route." />
+              <CapabilityItem text="Work through interactive lessons with progress." />
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-rule bg-card/88 p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+            <BookCheckIcon aria-hidden="true" className="size-4" />
+          </span>
+          <div>
+            <p className="font-semibold tracking-[-0.02em]">
+              What Dean can check
+            </p>
+            <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
+              <CapabilityItem text="Grade bounded SQL and code-style exercises." />
+              <CapabilityItem text="Unlock lesson completion only after required practice." />
+              <CapabilityItem text="Save final recommendations or explanations as artifacts." />
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-dashed border-rule bg-muted/35 p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
+            <ListChecksIcon aria-hidden="true" className="size-4" />
+          </span>
+          <div>
+            <p className="font-semibold tracking-[-0.02em]">
+              Prototype boundary
+            </p>
+            <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
+              <CapabilityItem text="No open-ended 'teach me anything' generation yet." />
+              <CapabilityItem text="Library, profile, and new tutor nav are visual placeholders." />
+              <CapabilityItem text="Session work is demo-scoped, not a full account system." />
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CapabilityItem({ text }: { readonly text: string }) {
+  return (
+    <li className="flex gap-2">
+      <CheckCircle2Icon
+        aria-hidden="true"
+        className="mt-1 size-3.5 shrink-0 text-primary"
+      />
+      <span>{text}</span>
+    </li>
   );
 }
 
@@ -137,7 +218,7 @@ function TrackCard({
   );
 }
 
-export function TrackSignal({ track }: { readonly track: TrackSpec; }) {
+export function TrackSignal({ track }: { readonly track: TrackSpec }) {
   return (
     <span className="hidden min-w-0 items-center gap-2 sm:flex">
       <span className="truncate text-xs font-medium text-foreground">
@@ -258,7 +339,7 @@ export function AdaptationMoment({
                   "block -mx-1 rounded px-1",
                   line.kind === "added" && "bg-success/15 text-success",
                   line.kind === "removed" &&
-                  "bg-destructive/15 text-destructive",
+                    "bg-destructive/15 text-destructive",
                 )}
                 key={`${line.kind}:${line.text}:${index}`}
               >
