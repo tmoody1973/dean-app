@@ -23,7 +23,8 @@ The core idea is simple:
 > three-track Build Week routing contract. The running agent can select and
 > scaffold exactly those three tracks, and validated lessons now render through
 > a safe one-block shell backed by all seven approved interactive components.
-> Deterministic execution and grading, track content, adaptation UI, and
+> The bounded deterministic grader is also built; connecting its authoritative
+> events to the interactive controls, track content, adaptation UI, and
 > deployment remain planned work. See [Current status](#current-status) for the
 > exact boundary.
 
@@ -220,6 +221,12 @@ thesis.
   it never treats model output as generated JSX.
 - Practice checks give immediate text-and-icon feedback, hints reveal one at a
   time, and code capture stays explicitly ungraded until execution is connected.
+- `grade_exercise` runs SQL against interruptible in-memory SQLite and owns exact
+  output, unordered row-match, and contains-all comparisons with hard time and
+  output limits.
+- The same tool can verify the Codex track through one server-owned artifact
+  profile with a bounded file marker, fixed syntax check, and fixed test command
+  inside eve's session sandbox.
 - Local Docker-backed workspace files survived session parking and a full
   local server restart during the spike.
 - The emergency fallback module satisfies the schema with one explain block.
@@ -228,7 +235,8 @@ thesis.
 
 ### Planned but not finished
 
-- SQL execution and deterministic grading are not wired into the learner UI.
+- Authoritative grading events are not yet wired into the learner UI's Check
+  actions.
 - The complete Data to Decision journey has not passed browser acceptance.
 - The Codex artifact lesson and Executive Communication preview are not built.
 - Failure-driven rewriting and the visible curriculum diff are not built.
@@ -285,6 +293,7 @@ the frontend will validate it again before rendering.
 - **Model:** `openai/gpt-5.6-luna` through Vercel AI Gateway
 - **Frontend:** Next.js 16, React 19, TypeScript 6
 - **Schema validation:** Zod 4
+- **SQL verification:** interruptible in-memory SQLite through `sqlite3` 6
 - **Styling:** Tailwind CSS 4
 - **Agent UI:** `useEveAgent()` from `eve/react`
 - **Runtime target:** Node.js 24
