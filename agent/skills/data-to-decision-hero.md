@@ -83,8 +83,10 @@ Do not create `01-preview.md`. After the seventh write, read lesson 01 and call
 Every lesson file includes its id, learner-domain example, canonical campaign
 fixture reference, intended modality and difficulty, verification tier,
 mastery requirement, and complete `onFailure` metadata. Preserve that metadata
-when rendering. This skill does not implement adaptation; the global
-adapt-on-failure route remains responsible for a failed mastery threshold.
+when rendering. The first eligible deterministic mismatch in
+`02-sql-retrieval` delegates exclusively to the global adapt-on-failure skill;
+that skill owns the evidence gate, lesson snapshots, rewrite, and replacement
+render. Other failures retain their normal retry and hint behavior.
 The rendered module `id` must exactly equal the lesson id so a browser
 completion event can be matched to the workspace pointer without trusting a
 client-supplied path.
@@ -209,6 +211,8 @@ For completion of the first three lessons, rewrite
 `write_file` call: mark the current entry `passed`, mark the next entry
 `active`, and set `current` to the next id. Preserve all learner, track,
 verification, modality, difficulty, lesson-path, and `onFailure` metadata.
+If lesson 02 was adapted, also preserve its complete `adaptation` object and
+all fixed revision paths.
 Then read the next lesson file and teach it via `render_module`.
 
 Progress only through this table:

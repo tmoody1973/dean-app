@@ -139,7 +139,7 @@ test("the four lessons cover framing, SQL, visualization, and recommendation", (
   assert.match(heroSkill, /visual evidence hierarchy[\s\S]*`conceptDiagram`/);
   assert.match(heroSkill, /required gradeable block last/);
   assert.match(heroSkill, /complete `onFailure` metadata/);
-  assert.match(heroSkill, /does not implement adaptation/);
+  assert.match(heroSkill, /delegates exclusively to the global adapt-on-failure skill/);
 });
 
 test("module completion advances only a module matching the workspace pointer", () => {

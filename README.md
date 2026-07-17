@@ -30,7 +30,9 @@ The core idea is simple:
 > artifact, fixed behavioral checks, and a saved learner explanation. The
 > Executive Communication track now runs one prepared leadership scenario
 > through two preserved drafts and a concrete, visibly judgment-supported
-> comparison. Failure-driven rewriting and deployment remain planned work. See
+> comparison. The first eligible Data to Decision SQL mismatch now preserves the
+> original lesson and evidence, then rebuilds a visual, mistake-specific retry.
+> A readable side-by-side diff and deployment remain planned work. See
 > [Current status](#current-status) for the exact boundary.
 
 ## Table of contents
@@ -276,13 +278,18 @@ thesis.
 - Executive feedback is explicitly labeled `Guided judgment — not verified
   mastery.` The flow emits no deterministic grader request, score, pass/fail
   result, objective ability claim, or employee-evaluation output.
+- The first eligible Data to Decision SQL mismatch preserves the original
+  lesson, learner SQL, adapted lesson, and display manifest before rebuilding
+  the active module. The rebuilt module carries the observed mistake into a
+  visual explanation and ends in the same deterministic SQL retry.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- Failure-driven rewriting and the visible curriculum diff are not built.
+- A readable before/after curriculum-diff interface is not built yet; the
+  original and adapted snapshots are preserved for it.
 - Guardrails, scheduled review, deployment, and submission validation remain.
 - Workspace persistence has not been verified on deployed Vercel Sandbox.
 
@@ -401,9 +408,12 @@ To confirm the complete hero journey and curated routing contract:
 1. Open a fresh page at `http://localhost:3000`.
 2. Enter `Data to Decision` and answer the three calibration questions. Confirm
    exactly seven workspace files become visible before lesson 1 renders.
-3. Complete the framing relationships, deliberately fail the starter SQL query,
-   then change it to calculate `revenue_dollars - spend_dollars`. Confirm only
-   the corrected query unlocks progression.
+3. Complete the framing relationships, deliberately submit the unchanged
+   starter SQL query, and confirm Dean saves the original lesson, raw learner
+   submission, adapted lesson, and display manifest before replacing the lesson
+   with a visual rebuild. Change the carried-forward query to calculate
+   `revenue_dollars - spend_dollars`; confirm only that corrected query unlocks
+   progression.
 4. Complete the visualization and recommendation relationship checks. Submit
    the requested four labeled recommendation lines and confirm
    `/workspace/artifacts/recommendation.md` is written.
