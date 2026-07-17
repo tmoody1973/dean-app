@@ -3,14 +3,7 @@ import test from "node:test";
 
 // Node's type-stripping runtime requires the .ts extension.
 // @ts-expect-error The project intentionally leaves allowImportingTsExtensions disabled.
-import {
-  createTrackSelectionMessage,
-  getTrackSpec,
-  parseTrackId,
-  TRACK_CATALOG,
-  TRACK_IDS,
-  TrackIdSchema,
-} from "../lib/track-spec.ts";
+import { createTrackSelectionMessage, getTrackSpec, parseTrackId, TRACK_CATALOG, TRACK_IDS, TrackIdSchema } from "../lib/track-spec.ts";
 
 test("the catalog contains exactly the three approved tracks", () => {
   assert.deepEqual(TRACK_IDS, [

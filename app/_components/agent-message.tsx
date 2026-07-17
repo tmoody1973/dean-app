@@ -23,6 +23,7 @@ import {
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
+import { ModuleRenderer } from "@/components/module/ModuleRenderer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -103,7 +104,15 @@ function AgentMessagePart({
       return <AuthorizationPrompt part={part} />;
     case "dynamic-tool":
       if (part.toolName === "render_module") {
-        return <pre>{JSON.stringify(part.input, null, 2)}</pre>;
+        return part.state === "input-streaming" ? (
+          <div
+            aria-label="Preparing lesson"
+            className="h-80 w-full animate-pulse rounded-2xl border bg-card/70 motion-reduce:animate-none"
+            role="status"
+          />
+        ) : (
+          <ModuleRenderer input={part.input} />
+        );
       }
       return (
         <Tool

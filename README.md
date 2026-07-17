@@ -21,9 +21,10 @@ The core idea is simple:
 > [!IMPORTANT]
 > This repository contains the verified **Day 1 foundation** and the approved
 > three-track Build Week routing contract. The running agent can select and
-> scaffold exactly those three tracks, but the complete renderer, grading loop,
-> track content, adaptation UI, and deployment remain planned work. See
-> [Current status](#current-status) for the exact boundary.
+> scaffold exactly those three tracks, and validated lessons now render through
+> a safe one-block shell. The interactive component registry, grading loop,
+> track content, adaptation UI, and deployment remain planned work. See [Current
+> status](#current-status) for the exact boundary.
 
 ## Table of contents
 
@@ -211,6 +212,8 @@ thesis.
 - `render_module` imports that schema directly as its `inputSchema`.
 - Valid module tool events reach the browser through eve's session stream.
 - Invalid modules are rejected at the tool boundary.
+- The frontend re-validates lesson input, falls back to a safe explanation, and
+  presents one block at a time with keyboard navigation and visible progress.
 - Local Docker-backed workspace files survived session parking and a full
   local server restart during the spike.
 - The emergency fallback module satisfies the schema with one explain block.
@@ -219,7 +222,6 @@ thesis.
 
 ### Planned but not finished
 
-- The frontend still shows `render_module` input in a raw development view.
 - The seven production learning components are not built.
 - SQL execution and deterministic grading are not wired into the learner UI.
 - The complete Data to Decision journey has not passed browser acceptance.
