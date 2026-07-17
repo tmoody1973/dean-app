@@ -5,10 +5,17 @@ import test from "node:test";
 // @ts-expect-error The project intentionally leaves allowImportingTsExtensions disabled.
 import { GradeExerciseInputSchema } from "../agent/tools/grade_exercise.ts";
 
+const identity = {
+  attemptId: "11111111-1111-4111-8111-111111111111",
+  moduleId: "sql-basics",
+  blockIndex: 0,
+};
+
 test("the grading tool accepts only supported deterministic request shapes", () => {
   assert.equal(
     GradeExerciseInputSchema.safeParse({
       kind: "sql",
+      ...identity,
       submission: "SELECT 1",
       mode: "exactOutput",
       expectedOutput: "[[1]]",
@@ -18,6 +25,7 @@ test("the grading tool accepts only supported deterministic request shapes", () 
   assert.equal(
     GradeExerciseInputSchema.safeParse({
       kind: "artifact",
+      ...identity,
       profileId: "codex-node-tool-v1",
     }).success,
     true,
@@ -26,6 +34,7 @@ test("the grading tool accepts only supported deterministic request shapes", () 
   for (const input of [
     {
       kind: "sql",
+      ...identity,
       submission: "SELECT 1",
       mode: "exactOutput",
       expectedOutput: "[[1]]",
@@ -33,11 +42,26 @@ test("the grading tool accepts only supported deterministic request shapes", () 
     },
     {
       kind: "artifact",
+      ...identity,
       profileId: "codex-node-tool-v1",
       command: "bash anything.sh",
     },
-    { kind: "artifact", profileId: "other-profile" },
-    { kind: "python", submission: "print(1)" },
+    { kind: "artifact", ...identity, profileId: "other-profile" },
+    { kind: "python", ...identity, submission: "print(1)" },
+    {
+      kind: "sql",
+      submission: "SELECT 1",
+      mode: "exactOutput",
+      expectedOutput: "[[1]]",
+    },
+    {
+      kind: "sql",
+      ...identity,
+      attemptId: "not-a-uuid",
+      submission: "SELECT 1",
+      mode: "exactOutput",
+      expectedOutput: "[[1]]",
+    },
   ]) {
     assert.equal(GradeExerciseInputSchema.safeParse(input).success, false);
   }

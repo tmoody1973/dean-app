@@ -2,18 +2,17 @@ import type { SandboxProcess, SandboxSession } from "eve/sandbox";
 import { z } from "zod";
 
 import {
+  ArtifactGradeInputSchema,
+  type ArtifactGradeInput,
+} from "#grading/contracts";
+import {
   finalizeGrade,
   type GradeError,
   type GradeResult,
 } from "#grading/result";
 
-export const ArtifactGradeInputSchema = z
-  .object({
-    profileId: z.literal("codex-node-tool-v1"),
-  })
-  .strict();
-
-export type ArtifactGradeInput = z.infer<typeof ArtifactGradeInputSchema>;
+export { ArtifactGradeInputSchema } from "#grading/contracts";
+export type { ArtifactGradeInput } from "#grading/contracts";
 
 const safeRelativePathSchema = z
   .string()

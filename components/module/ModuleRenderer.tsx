@@ -5,6 +5,8 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { BlockRenderer } from "@/components/module/BlockRenderer";
 import { Button } from "@/components/ui/button";
+import type { GradeExerciseInput } from "@/lib/grading/contracts";
+import type { GradeAttemptProjection } from "@/lib/grading/grading-events";
 import {
   parseModule,
   safeFallback,
@@ -15,7 +17,19 @@ const FALLBACK_CONCEPT = "A simpler explanation";
 const FALLBACK_MARKDOWN =
   "Review the current concept in plain language, then continue when you are ready.";
 
-export function ModuleRenderer({ input }: { readonly input: unknown }) {
+type ModuleRendererProps = {
+  readonly canSubmitExercise: boolean;
+  readonly gradeAttempts: GradeAttemptProjection;
+  readonly input: unknown;
+  readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
+};
+
+export function ModuleRenderer({
+  canSubmitExercise,
+  gradeAttempts,
+  input,
+  onExerciseSubmit,
+}: ModuleRendererProps) {
   const module = useMemo(() => {
     const parsed = parseModule(input);
 
@@ -29,13 +43,26 @@ export function ModuleRenderer({ input }: { readonly input: unknown }) {
 
   return (
     <ModuleShell
+      canSubmitExercise={canSubmitExercise}
+      gradeAttempts={gradeAttempts}
       key={moduleRevision(module)}
       module={module}
+      onExerciseSubmit={onExerciseSubmit}
     />
   );
 }
 
-function ModuleShell({ module }: { readonly module: LearningModuleT }) {
+function ModuleShell({
+  canSubmitExercise,
+  gradeAttempts,
+  module,
+  onExerciseSubmit,
+}: {
+  readonly canSubmitExercise: boolean;
+  readonly gradeAttempts: GradeAttemptProjection;
+  readonly module: LearningModuleT;
+  readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interactionReady, setInteractionReady] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
@@ -122,7 +149,12 @@ function ModuleShell({ module }: { readonly module: LearningModuleT }) {
       >
         <BlockRenderer
           block={currentBlock}
+          blockIndex={currentIndex}
+          canSubmitExercise={canSubmitExercise}
+          gradeAttempts={gradeAttempts}
+          moduleId={module.id}
           onCheckedChange={setInteractionReady}
+          onExerciseSubmit={onExerciseSubmit}
           onReadyChange={setInteractionReady}
         />
       </div>

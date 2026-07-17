@@ -1,20 +1,11 @@
 import { defineTool } from "eve/tools";
-import { z } from "zod";
 
-import {
-  ArtifactGradeInputSchema,
-  gradeArtifact,
-} from "#grading/artifact-grader";
+import { gradeArtifact } from "#grading/artifact-grader";
+import { GradeExerciseInputSchema } from "#grading/contracts";
 import { GradeResultSchema } from "#grading/result";
-import {
-  gradeSqlExercise,
-  SqlGradeRequestSchema,
-} from "#grading/sql-grader";
+import { gradeSqlExercise } from "#grading/sql-grader";
 
-export const GradeExerciseInputSchema = z.discriminatedUnion("kind", [
-  SqlGradeRequestSchema.extend({ kind: z.literal("sql") }),
-  ArtifactGradeInputSchema.extend({ kind: z.literal("artifact") }),
-]);
+export { GradeExerciseInputSchema } from "#grading/contracts";
 
 export default defineTool({
   description:

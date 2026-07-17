@@ -1,31 +1,29 @@
 import sqlite3 from "sqlite3";
-import { z } from "zod";
 
 import {
-  ComparisonModeSchema,
+  MAX_SQL_EXPECTED_OUTPUT_LENGTH,
+  MAX_SQL_SETUP_LENGTH,
+  MAX_SQL_SUBMISSION_LENGTH,
+  SqlGradeRequestSchema,
+  type SqlGradeRequest,
+} from "#grading/contracts";
+
+import {
   compareOutputs,
   finalizeGrade,
   type GradeError,
   type GradeResult,
 } from "#grading/result";
 
-const MAX_SETUP_BYTES = 24_000;
-const MAX_SUBMISSION_BYTES = 12_000;
-const MAX_EXPECTED_OUTPUT_BYTES = 32_768;
+const MAX_SETUP_BYTES = MAX_SQL_SETUP_LENGTH;
+const MAX_SUBMISSION_BYTES = MAX_SQL_SUBMISSION_LENGTH;
+const MAX_EXPECTED_OUTPUT_BYTES = MAX_SQL_EXPECTED_OUTPUT_LENGTH;
 const MAX_ACTUAL_OUTPUT_BYTES = 32_768;
 const MAX_ROWS = 1_000;
 const SQL_TIMEOUT_MS = 750;
 
-export const SqlGradeRequestSchema = z
-  .object({
-    setupScript: z.string().max(MAX_SETUP_BYTES).optional(),
-    submission: z.string().min(1).max(MAX_SUBMISSION_BYTES),
-    mode: ComparisonModeSchema,
-    expectedOutput: z.string().max(MAX_EXPECTED_OUTPUT_BYTES),
-  })
-  .strict();
-
-export type SqlGradeRequest = z.infer<typeof SqlGradeRequestSchema>;
+export { SqlGradeRequestSchema } from "#grading/contracts";
+export type { SqlGradeRequest } from "#grading/contracts";
 
 type SqlExecution =
   | { readonly ok: true; readonly actualOutput: string }

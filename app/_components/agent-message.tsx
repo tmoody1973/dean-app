@@ -25,6 +25,8 @@ import {
 } from "@/components/ai-elements/tool";
 import { ModuleRenderer } from "@/components/module/ModuleRenderer";
 import { Button } from "@/components/ui/button";
+import type { GradeExerciseInput } from "@/lib/grading/contracts";
+import type { GradeAttemptProjection } from "@/lib/grading/grading-events";
 import { cn } from "@/lib/utils";
 
 export type AgentInputResponse = {
@@ -37,13 +39,19 @@ type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
 
 export function AgentMessage({
   canRespond,
+  canSubmitExercise,
+  gradeAttempts,
   isStreaming,
   message,
+  onExerciseSubmit,
   onInputResponses,
 }: {
   readonly canRespond: boolean;
+  readonly canSubmitExercise: boolean;
+  readonly gradeAttempts: GradeAttemptProjection;
   readonly isStreaming: boolean;
   readonly message: EveMessage;
+  readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
 }) {
   const lastTextIndex = message.parts.reduce(
@@ -60,7 +68,10 @@ export function AgentMessage({
         {message.parts.map((part, index) => (
           <AgentMessagePart
             canRespond={canRespond}
+            canSubmitExercise={canSubmitExercise}
+            gradeAttempts={gradeAttempts}
             key={partKey(part, index)}
+            onExerciseSubmit={onExerciseSubmit}
             onInputResponses={onInputResponses}
             part={part}
             showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
@@ -73,11 +84,17 @@ export function AgentMessage({
 
 function AgentMessagePart({
   canRespond,
+  canSubmitExercise,
+  gradeAttempts,
+  onExerciseSubmit,
   onInputResponses,
   part,
   showCaret,
 }: {
   readonly canRespond: boolean;
+  readonly canSubmitExercise: boolean;
+  readonly gradeAttempts: GradeAttemptProjection;
+  readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
   readonly part: EveMessagePart;
   readonly showCaret: boolean;
@@ -103,6 +120,10 @@ function AgentMessagePart({
     case "authorization":
       return <AuthorizationPrompt part={part} />;
     case "dynamic-tool":
+      if (part.toolName === "grade_exercise") {
+        return null;
+      }
+
       if (part.toolName === "render_module") {
         return part.state === "input-streaming" ? (
           <div
@@ -111,7 +132,12 @@ function AgentMessagePart({
             role="status"
           />
         ) : (
-          <ModuleRenderer input={part.input} />
+          <ModuleRenderer
+            canSubmitExercise={canSubmitExercise}
+            gradeAttempts={gradeAttempts}
+            input={part.input}
+            onExerciseSubmit={onExerciseSubmit}
+          />
         );
       }
       return (

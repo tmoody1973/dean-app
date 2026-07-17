@@ -3,6 +3,7 @@
 import type { UserContent } from "ai";
 import { useEveAgent } from "eve/react";
 import { AlertCircleIcon } from "lucide-react";
+import { useMemo } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -14,6 +15,8 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
+import type { GradeExerciseInput } from "@/lib/grading/contracts";
+import { projectGradeAttempts } from "@/lib/grading/grading-events";
 import { cn } from "@/lib/utils";
 import { AgentMessage } from "./agent-message";
 
@@ -25,6 +28,20 @@ export function AgentChat() {
   const agent = useEveAgent();
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
   const isEmpty = agent.data.messages.length === 0;
+  const gradeAttempts = useMemo(
+    () => projectGradeAttempts(agent.events),
+    [agent.events],
+  );
+
+  const handleExerciseSubmit = async (submission: GradeExerciseInput) => {
+    await agent.send({
+      message: "Check my current exercise.",
+      clientContext: {
+        type: "dean.exercise-submission.v1",
+        submission,
+      },
+    });
+  };
 
   const handleSubmit = async (message: PromptInputMessage) => {
     const text = message.text.trim();
@@ -87,11 +104,14 @@ export function AgentChat() {
             {agent.data.messages.map((message, index) => (
               <AgentMessage
                 canRespond={!isBusy}
+                canSubmitExercise={!isBusy}
+                gradeAttempts={gradeAttempts}
                 isStreaming={
                   agent.status === "streaming" && index === agent.data.messages.length - 1
                 }
                 key={message.id}
                 message={message}
+                onExerciseSubmit={handleExerciseSubmit}
                 onInputResponses={(inputResponses) => agent.send({ inputResponses })}
               />
             ))}

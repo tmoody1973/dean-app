@@ -7,13 +7,20 @@ import { ExplainBlock } from "@/components/module/blocks/ExplainBlock";
 import { ParameterSliderBlock } from "@/components/module/blocks/ParameterSliderBlock";
 import { QuizBlock } from "@/components/module/blocks/QuizBlock";
 import { RevealSequenceBlock } from "@/components/module/blocks/RevealSequenceBlock";
+import type { GradeExerciseInput } from "@/lib/grading/contracts";
+import type { GradeAttemptProjection } from "@/lib/grading/grading-events";
 import type { LearningModuleT } from "@/lib/module-spec";
 
 type LearningBlock = LearningModuleT["blocks"][number];
 
 type BlockRendererProps = {
   readonly block: LearningBlock;
+  readonly blockIndex: number;
+  readonly canSubmitExercise: boolean;
+  readonly gradeAttempts: GradeAttemptProjection;
+  readonly moduleId: string;
   readonly onCheckedChange: (checked: boolean) => void;
+  readonly onExerciseSubmit: (input: GradeExerciseInput) => Promise<void>;
   readonly onReadyChange: (ready: boolean) => void;
 };
 
@@ -23,7 +30,12 @@ type BlockRendererProps = {
  */
 export function BlockRenderer({
   block,
+  blockIndex,
+  canSubmitExercise,
+  gradeAttempts,
+  moduleId,
   onCheckedChange,
+  onExerciseSubmit,
   onReadyChange,
 }: BlockRendererProps) {
   switch (block.type) {
@@ -33,7 +45,12 @@ export function BlockRenderer({
       return (
         <CodeExerciseBlock
           block={block}
+          blockIndex={blockIndex}
+          canSubmit={canSubmitExercise}
+          gradeAttempts={gradeAttempts}
+          moduleId={moduleId}
           onCheckedChange={onCheckedChange}
+          onSubmit={onExerciseSubmit}
         />
       );
     case "conceptDiagram":

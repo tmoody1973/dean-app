@@ -19,14 +19,14 @@ The core idea is simple:
 - help learners produce useful professional decisions and artifacts.
 
 > [!IMPORTANT]
-> This repository contains the verified **Day 1 foundation** and the approved
-> three-track Build Week routing contract. The running agent can select and
-> scaffold exactly those three tracks, and validated lessons now render through
-> a safe one-block shell backed by all seven approved interactive components.
-> The bounded deterministic grader is also built; connecting its authoritative
-> events to the interactive controls, track content, adaptation UI, and
-> deployment remain planned work. See [Current status](#current-status) for the
-> exact boundary.
+> This repository contains the verified **Day 1 foundation**, the approved
+> three-track Build Week routing contract, and the core Day 2 interaction
+> infrastructure. The running agent can select and scaffold exactly those three
+> tracks, validated lessons render through a safe one-block shell backed by all
+> seven approved interactive components, and supported SQL exercises now use
+> authoritative deterministic grading events. Hero track content, adaptation
+> UI, and deployment remain planned work. See [Current status](#current-status)
+> for the exact boundary.
 
 ## Table of contents
 
@@ -219,8 +219,12 @@ thesis.
 - The frontend registry renders explanation, code exercise, concept diagram,
   parameter slider, matching, quiz, and paced-reveal blocks from validated data;
   it never treats model output as generated JSX.
-- Practice checks give immediate text-and-icon feedback, hints reveal one at a
-  time, and code capture stays explicitly ungraded until execution is connected.
+- SQL code exercises send the learner's exact structured submission to
+  `grade_exercise` and derive pending, pass, fail, and retryable-error UI from
+  authoritative tool events rather than model narration.
+- Retryable grading errors preserve the learner's input without consuming a
+  hint; deterministic failed attempts reveal one progressive hint at a time;
+  only an authoritative passing event unlocks the lesson.
 - `grade_exercise` runs SQL against interruptible in-memory SQLite and owns exact
   output, unordered row-match, and contains-all comparisons with hard time and
   output limits.
@@ -229,14 +233,15 @@ thesis.
   inside eve's session sandbox.
 - Local Docker-backed workspace files survived session parking and a full
   local server restart during the spike.
+- Local browser acceptance covers grader errors, deterministic failure and
+  hints, passing unlocks, and parity between the displayed state and raw eve
+  action events.
 - The emergency fallback module satisfies the schema with one explain block.
 - The professional-learning roadmap and Linear issue contracts are approved
   under `docs/plans/`.
 
 ### Planned but not finished
 
-- Authoritative grading events are not yet wired into the learner UI's Check
-  actions.
 - The complete Data to Decision journey has not passed browser acceptance.
 - The Codex artifact lesson and Executive Communication preview are not built.
 - Failure-driven rewriting and the visible curriculum diff are not built.
