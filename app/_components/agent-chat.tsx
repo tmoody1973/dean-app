@@ -262,6 +262,8 @@ function LearningWorkspace({
   readonly routeItems: readonly CurriculumRouteItem[];
   readonly selectedTrack: TrackSpec | null;
 }) {
+  const routeSummary = summarizeRoute(routeItems);
+
   return (
     <section className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[14rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)_20rem]">
       <aside className="hidden border-r border-rule bg-card/72 px-3 py-4 lg:flex lg:flex-col">
@@ -315,6 +317,7 @@ function LearningWorkspace({
             </span>
             <span className="px-3 py-2 text-muted-foreground">Practice</span>
           </div>
+          <CompactRouteSummary summary={routeSummary} />
         </header>
 
         {error ? (
@@ -355,10 +358,15 @@ function LearningWorkspace({
 
       <aside className="hidden min-w-0 border-l border-rule bg-card/72 xl:flex xl:flex-col">
         <div className="border-b px-5 py-5">
-          <p className="flex items-center gap-2 text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
-            <RouteIcon aria-hidden="true" className="size-3.5" />
-            Learning route
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+              <RouteIcon aria-hidden="true" className="size-3.5" />
+              Learning route
+            </p>
+            <span className="rounded-full border bg-background px-2 py-1 text-muted-foreground text-xs tabular-nums">
+              {routeSummary.doneCount}/{routeSummary.totalCount}
+            </span>
+          </div>
           <h2 className="mt-2 text-pretty font-semibold leading-6">
             {selectedTrack?.outcome ??
               "A generated path that adapts as you work"}
@@ -405,6 +413,90 @@ function LearningWorkspace({
       </aside>
     </section>
   );
+}
+
+type RouteSummary = {
+  readonly activeDescription: string;
+  readonly activeTitle: string;
+  readonly doneCount: number;
+  readonly isComplete: boolean;
+  readonly locationPercent: number;
+  readonly stepNumber: number;
+  readonly totalCount: number;
+};
+
+function CompactRouteSummary({ summary }: { readonly summary: RouteSummary }) {
+  return (
+    <section className="mt-3 rounded-lg border border-rule bg-card/72 p-3 xl:hidden">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
+            <RouteIcon aria-hidden="true" className="size-3.5" />
+            Route progress
+          </p>
+          <p className="mt-1 truncate font-medium">{summary.activeTitle}</p>
+          <p className="mt-1 line-clamp-2 text-muted-foreground text-xs leading-5">
+            {summary.activeDescription}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border bg-background px-2.5 py-1 text-muted-foreground text-xs tabular-nums">
+          {summary.isComplete
+            ? "Complete"
+            : `Step ${summary.stepNumber}/${summary.totalCount}`}
+        </span>
+      </div>
+      <div
+        aria-label={
+          summary.isComplete
+            ? "Learning route complete"
+            : `Learning route progress: step ${summary.stepNumber} of ${summary.totalCount}`
+        }
+        aria-valuemax={summary.totalCount}
+        aria-valuemin={1}
+        aria-valuenow={summary.stepNumber}
+        className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out motion-reduce:transition-none"
+          style={{ width: `${summary.locationPercent}%` }}
+        />
+      </div>
+      <p className="mt-2 text-muted-foreground text-xs">
+        {summary.doneCount} of {summary.totalCount} route steps complete.
+      </p>
+    </section>
+  );
+}
+
+function summarizeRoute(
+  routeItems: readonly CurriculumRouteItem[],
+): RouteSummary {
+  const totalCount = Math.max(routeItems.length, 1);
+  const doneCount = routeItems.filter((item) => item.state === "done").length;
+  const isComplete = routeItems.length > 0 && doneCount === routeItems.length;
+  const activeIndex = routeItems.findIndex((item) => item.state === "active");
+  const resolvedIndex = isComplete
+    ? routeItems.length - 1
+    : activeIndex >= 0
+      ? activeIndex
+      : 0;
+  const activeItem = routeItems[resolvedIndex] ?? {
+    description: "Dean turns your goal into a visible route.",
+    state: "active",
+    title: "Tutor route",
+  };
+  const stepNumber = Math.min(totalCount, Math.max(1, resolvedIndex + 1));
+
+  return {
+    activeDescription: activeItem.description,
+    activeTitle: activeItem.title,
+    doneCount,
+    isComplete,
+    locationPercent: isComplete ? 100 : (stepNumber / totalCount) * 100,
+    stepNumber,
+    totalCount,
+  };
 }
 
 function WorkspaceNavItem({
