@@ -177,7 +177,9 @@ For client context with `type: "dean.module-completion.v1"`, first read the
 session and curriculum. The workspace must record this exact track. Advance
 only if `moduleId` is exactly `codex-work-tool-01` and exactly equals
 `current`; treat the client string only as an equality check and never as a
-path. Ignore stale or mismatched completion events.
+path. For a stale or mismatched event, do not advance and do not stay silent.
+Say exactly one short sentence telling the learner the lesson could not be
+advanced and to try the current visible step again.
 
 On valid completion, rewrite `/workspace/curriculum.md` once: mark the one
 lesson `passed`, set `current: learner-explanation`, set

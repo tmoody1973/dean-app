@@ -87,6 +87,7 @@ function ModuleShell({
   const [completionState, setCompletionState] = useState<
     "idle" | "pending" | "completed" | "error"
   >("idle");
+  const [completionError, setCompletionError] = useState<string | null>(null);
   const completionInFlight = useRef(false);
   const completionSucceeded = useRef(false);
   const stepRef = useRef<HTMLDivElement>(null);
@@ -137,11 +138,17 @@ function ModuleShell({
 
     completionInFlight.current = true;
     setCompletionState("pending");
+    setCompletionError(null);
     try {
       await onModuleComplete(module.id);
       completionSucceeded.current = true;
       setCompletionState("completed");
-    } catch {
+    } catch (error) {
+      setCompletionError(
+        error instanceof Error
+          ? error.message
+          : "Dean could not advance the lesson. Try again.",
+      );
       setCompletionState("error");
     } finally {
       completionInFlight.current = false;
@@ -342,7 +349,7 @@ function ModuleShell({
         )}
         {isComplete && completionState === "error" ? (
           <p className="text-destructive text-sm" role="alert">
-            Couldn’t continue the lesson. Try again.
+            {completionError ?? "Couldn’t continue the lesson. Try again."}
           </p>
         ) : null}
       </footer>

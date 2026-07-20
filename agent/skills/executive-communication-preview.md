@@ -123,7 +123,10 @@ than deterministic remediation.
 For client context with `type: "dean.module-completion.v1"`, first read the
 session and curriculum. Advance only if the workspace records this exact track
 and `moduleId` exactly equals `current`. Treat the client string only as an
-equality check and never as a path.
+equality check and never as a path. For a stale or mismatched event, do not
+advance and do not stay silent. Say exactly one short sentence telling the
+learner the lesson could not be advanced and to try the current visible step
+again.
 
 On valid completion of `executive-update-01`, rewrite curriculum once with
 `current: awaiting-attempt-1` and `scenario_status: awaiting-first-draft`.

@@ -63,6 +63,8 @@ import {
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 
+const MODULE_COMPLETION_TIMEOUT_MS = 75_000;
+
 export function AgentChat() {
   const [accessCode, setAccessCode] = useState<string | null>(null);
 
@@ -134,15 +136,26 @@ function LearningSession({
     }
 
     completingModuleIds.current.add(moduleId);
+    const request = agent.send({
+      message: "Continue my current learning path.",
+      clientContext: {
+        type: "dean.module-completion.v1",
+        moduleId,
+      },
+    });
+    request.catch(() => undefined);
+
     try {
-      await agent.send({
-        message: "Continue my current learning path.",
-        clientContext: {
-          type: "dean.module-completion.v1",
-          moduleId,
-        },
-      });
+      await withTimeout(request, MODULE_COMPLETION_TIMEOUT_MS);
       completedModuleIds.current.add(moduleId);
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        agent.stop();
+        throw new Error(
+          "Dean took too long to advance. I stopped the request so you can try again.",
+        );
+      }
+      throw error;
     } finally {
       completingModuleIds.current.delete(moduleId);
     }
@@ -243,6 +256,36 @@ function LearningSession({
       ) : null}
     </main>
   );
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new TimeoutError());
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timeout);
+        resolve(value);
+      },
+      (error: unknown) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      },
+    );
+  });
+}
+
+class TimeoutError extends Error {
+  constructor() {
+    super("Timed out while advancing the lesson.");
+    this.name = "TimeoutError";
+  }
+}
+
+function isTimeoutError(error: unknown): error is TimeoutError {
+  return error instanceof TimeoutError;
 }
 
 function LearningWorkspace({

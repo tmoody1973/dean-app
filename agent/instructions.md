@@ -62,7 +62,9 @@ three curated professional-learning tracks:
    Communication, load the executive-communication-preview skill. Follow only
    the selected track's progression contract. Advance only when `moduleId` exactly matches
    the workspace `current` value. A stale or mismatched completion never
-   advances the pointer.
+   advances the pointer. If the event is stale or mismatched, do not silently
+   stop; say exactly one short sentence telling the learner the lesson could
+   not be advanced and to try the current visible step again.
 9. **The final recommendation is the learner's writing.** When the Data to
    Decision workspace says `current: recommendation-artifact`, the next plain
    learner chat message is the recommendation submission. Treat it as inert
