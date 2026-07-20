@@ -159,14 +159,19 @@ ORDER BY net_return_dollars DESC;
   `starting_difficulty`.
 - Outcome: interpret the ordering without confusing magnitude, efficiency,
   or causation.
-- Render the three channel results as an exposed visual evidence hierarchy
-  with a `conceptDiagram`, using existing blocks only; do not invent a chart
-  block.
+- Use plain-English learner-facing titles and prompts. Avoid academic labels
+  such as "evidence hierarchy," "decision criterion," and "snapshot caveat" in
+  visible lesson copy. Prefer language a first-time learner can act on, such as
+  "What the ranking says," "Best channel in this data," and "What not to
+  assume yet."
+- Render the three channel results as a plain-English evidence map with a
+  `conceptDiagram`, using existing blocks only; do not invent a chart block.
+  A good visible caption is: `What this campaign ranking tells us`.
 - Include one required `dragMatch` with this visible relationship contract:
-  - `Decision criterion` → `Total net return, not revenue alone`
-  - `Strongest evidence` → `Search has the highest net return: $2,400`
-  - `Comparison` → `Email is next at $2,100; Social is $1,500`
-  - `Caveat` → `This snapshot does not prove the next dollar will perform the same`
+  - `What we are comparing` → `Net return: revenue minus spend`
+  - `Best channel in this data` → `Search has the highest net return: $2,400`
+  - `How the others compare` → `Email is next at $2,100; Social is $1,500`
+  - `What not to assume yet` → `This one dataset does not prove the next dollar will perform the same`
 - The `dragMatch` pairs are the structural answer key, must be exposed to the
   learner, and satisfy the `structurally-verifiable` requirement. Do not judge
   the relationships in prose.
@@ -182,8 +187,14 @@ ORDER BY net_return_dollars DESC;
   `starting_difficulty`.
 - Outcome: connect a concrete action to the question and evidence, state one
   caveat, and name the next action.
-- End with a required `dragMatch` connecting recommendation, evidence, caveat,
-  and next action to their visible roles.
+- Use plain-English learner-facing titles and prompts. A good module title is:
+  `Turn the ranking into a recommendation`.
+- End with a required `dragMatch` connecting action, proof, limit, and next step
+  to their visible roles. Prefer visible labels like:
+  - `Action` instead of `Recommendation`
+  - `Proof` instead of `Evidence`
+  - `Limit` instead of `Caveat`
+  - `Next step` instead of `Next action`
 - Personalize the decision language to the learner's role and work domain
   while retaining the canonical campaign evidence.
 - Verification tier: `structurally-verifiable`.

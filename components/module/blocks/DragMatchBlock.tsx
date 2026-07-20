@@ -9,7 +9,7 @@ import type { LearningModuleT } from "@/lib/module-spec";
 
 type DragMatch = Extract<
   LearningModuleT["blocks"][number],
-  { type: "dragMatch"; }
+  { type: "dragMatch" }
 >;
 
 type DragMatchBlockProps = {
@@ -71,11 +71,11 @@ export function DragMatchBlock({
       </p>
       <p className="text-pretty text-lg leading-8">{block.prompt}</p>
       <p className="mt-3 text-muted-foreground text-sm">
-        Choose an item on the left, then choose its match on the right.
+        Tap an item on the left, then tap the plain-English meaning that goes
+        with it.
       </p>
       <p className="mt-2 text-muted-foreground text-sm">
-        Required criterion: every declared relationship must match before you
-        can continue.
+        You can continue after every item has the right match.
       </p>
 
       <div
@@ -186,17 +186,17 @@ export function DragMatchBlock({
             )}
             <div>
               <p className="font-medium">
-                Relationship check: {relationshipCheck.correctCount} of{" "}
-                {relationshipCheck.requiredCount} required matches correct.
+                You matched {relationshipCheck.correctCount} of{" "}
+                {relationshipCheck.requiredCount} correctly.
               </p>
               <p className="text-muted-foreground">
                 {relationshipCheck.satisfied
-                  ? "The declared relationships are structurally satisfied."
-                  : "All declared relationships are required to continue."}
+                  ? "That is the full set. You can continue."
+                  : "Fix the matches and try again before continuing."}
               </p>
               <p className="mt-1 text-muted-foreground text-xs">
-                This structural check does not judge broader semantic
-                correctness.
+                This checks whether you connected the right ideas. It does not
+                grade your writing style.
               </p>
               <Button
                 className="mt-2 h-auto px-0 py-1"

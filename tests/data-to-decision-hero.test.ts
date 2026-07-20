@@ -136,7 +136,8 @@ test("the four lessons cover framing, SQL, visualization, and recommendation", (
   assert.match(heroSkill, /required `dragMatch`[\s\S]*visible relationship contract/);
   assert.match(heroSkill, /pairs are the structural answer key/);
   assert.match(heroSkill, /exposed to the\s+learner/);
-  assert.match(heroSkill, /visual evidence hierarchy[\s\S]*`conceptDiagram`/);
+  assert.match(heroSkill, /plain-English evidence map[\s\S]*`conceptDiagram`/);
+  assert.match(heroSkill, /Avoid academic labels/);
   assert.match(heroSkill, /required gradeable block last/);
   assert.match(heroSkill, /complete `onFailure` metadata/);
   assert.match(heroSkill, /delegates exclusively to the global adapt-on-failure skill/);

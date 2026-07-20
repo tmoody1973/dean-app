@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 type ConceptDiagramBlockData = Extract<
   LearningModuleT["blocks"][number],
-  { type: "conceptDiagram"; }
+  { type: "conceptDiagram" }
 >;
 
 export function ConceptDiagramBlock({
@@ -97,9 +97,9 @@ export function ConceptDiagramBlock({
       {block.edges.length > 0 ? (
         <div className="mt-8 border-rule border-t pt-6">
           <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-            Connections
+            How these ideas connect
           </p>
-          <ul className="mt-3 space-y-2" aria-label="Connections">
+          <ul className="mt-3 space-y-2" aria-label="How these ideas connect">
             {block.edges.map((edge, index) => (
               <li
                 className="flex min-h-11 items-center gap-2 rounded-lg bg-muted/35 px-4 py-2.5 text-sm"
