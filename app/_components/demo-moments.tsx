@@ -90,8 +90,8 @@ export function DemoCapabilities() {
             </p>
             <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
               <CapabilityItem text="Pick one of three prepared tutor paths." />
+              <CapabilityItem text="Build a custom tutor plan from a work goal." />
               <CapabilityItem text="Answer calibration questions so Dean can build a route." />
-              <CapabilityItem text="Work through interactive lessons with progress." />
             </ul>
           </div>
         </div>
@@ -126,7 +126,7 @@ export function DemoCapabilities() {
             </p>
             <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
               <CapabilityItem text="No open-ended 'teach me anything' generation yet." />
-              <CapabilityItem text="Build New Tutor and Library save local drafts only." />
+              <CapabilityItem text="Custom tutor plans launch through the three verified MVP paths." />
               <CapabilityItem text="Session work is demo-scoped, not a full account system." />
             </ul>
           </div>

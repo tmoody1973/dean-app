@@ -49,6 +49,12 @@ import {
   type CurriculumRouteItem,
 } from "@/lib/demo-display";
 import {
+  createTutorBlueprint,
+  createTutorLaunchMessage,
+  type TutorBlueprint,
+  type TutorPlanStep,
+} from "@/lib/tutor-builder";
+import {
   getTrackSpec,
   TRACK_CATALOG,
   type TrackId,
@@ -70,13 +76,9 @@ import {
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
 type WorkspaceView = "current" | "build" | "library" | "profile";
 
-type TutorDraft = {
+type TutorDraft = TutorBlueprint & {
   readonly createdAt: string;
-  readonly goal: string;
   readonly id: string;
-  readonly name: string;
-  readonly trackId: TrackId;
-  readonly workContext: string;
 };
 
 const MODULE_COMPLETION_TIMEOUT_MS = 75_000;
@@ -228,16 +230,47 @@ function LearningSession({
     await agent.send({ message });
   };
 
-  const handleCreateTutorDraft = (
-    draft: Omit<TutorDraft, "createdAt" | "id">,
-  ) => {
+  const createTutorDraft = (blueprint: TutorBlueprint): TutorDraft => {
     const createdDraft: TutorDraft = {
-      ...draft,
+      ...blueprint,
       createdAt: new Date().toISOString(),
       id: createLocalId(),
     };
     setTutorDrafts((current) => [createdDraft, ...current].slice(0, 12));
+    return createdDraft;
+  };
+
+  const handleCreateTutorDraft = (blueprint: TutorBlueprint) => {
+    createTutorDraft(blueprint);
     setWorkspaceView("library");
+  };
+
+  const handleStartTutorDraft = async (blueprint: TutorBlueprint) => {
+    if (isBusy) return;
+    const draft = isSavedTutorDraft(blueprint)
+      ? blueprint
+      : createTutorDraft(blueprint);
+    completedModuleIds.current = new Set<string>();
+    completingModuleIds.current = new Set<string>();
+    agent.reset();
+    setWorkspaceView("current");
+    await agent.send({
+      message: createTutorLaunchMessage(draft),
+      clientContext: {
+        tutor: {
+          goal: draft.goal,
+          id: draft.id,
+          name: draft.name,
+          steps: draft.steps.map(({ evidence, title }) => ({
+            evidence,
+            title,
+          })),
+          trackId: draft.trackId,
+          workContext: draft.workContext,
+        },
+        type: "dean.custom-tutor-launch.v1",
+      },
+    });
   };
 
   const composer = (
@@ -257,6 +290,7 @@ function LearningSession({
           error={agent.error?.message ?? null}
           isBusy={isBusy}
           onCreateTutorDraft={handleCreateTutorDraft}
+          onStartTutorDraft={handleStartTutorDraft}
           onChangePasscode={onChangePasscode}
           routeItems={demo.routeItems}
           selectedTrack={selectedTrack}
@@ -299,13 +333,32 @@ function LearningSession({
 
       {isEmpty ? (
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6 sm:py-12">
-          <>
-            <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
-            <DemoCapabilities />
-            <ScheduledReviewNotice />
-          </>
-          <div className="w-full">{composer}</div>
-          <DemoComposerPrompt />
+          {workspaceView === "build" ? (
+            <BuildNewTutorPanel
+              disabled={isBusy}
+              onCancel={() => setWorkspaceView("current")}
+              onCreateTutorDraft={handleCreateTutorDraft}
+              onStartTutorDraft={handleStartTutorDraft}
+            />
+          ) : (
+            <>
+              <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
+              <Button
+                className="gap-2"
+                disabled={isBusy}
+                onClick={() => setWorkspaceView("build")}
+                type="button"
+                variant="outline"
+              >
+                <PlusIcon aria-hidden="true" className="size-4" />
+                Build a custom tutor
+              </Button>
+              <DemoCapabilities />
+              <ScheduledReviewNotice />
+              <div className="w-full">{composer}</div>
+              <DemoComposerPrompt />
+            </>
+          )}
         </div>
       ) : null}
     </main>
@@ -316,22 +369,40 @@ function parseTutorDrafts(value: string): readonly TutorDraft[] {
   try {
     const parsed: unknown = JSON.parse(value);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isTutorDraft).slice(0, 12);
+    return parsed
+      .flatMap((item) => {
+        const draft = normalizeTutorDraft(item);
+        return draft === null ? [] : [draft];
+      })
+      .slice(0, 12);
   } catch {
     return [];
   }
 }
 
-function isTutorDraft(value: unknown): value is TutorDraft {
-  if (!isRecord(value)) return false;
-  return (
-    typeof value.createdAt === "string" &&
-    typeof value.goal === "string" &&
-    typeof value.id === "string" &&
-    typeof value.name === "string" &&
-    isTrackId(value.trackId) &&
-    typeof value.workContext === "string"
-  );
+function normalizeTutorDraft(value: unknown): TutorDraft | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.createdAt !== "string" ||
+    typeof value.goal !== "string" ||
+    typeof value.id !== "string" ||
+    !isTrackId(value.trackId) ||
+    typeof value.workContext !== "string"
+  ) {
+    return null;
+  }
+
+  const blueprint = createTutorBlueprint({
+    goal: value.goal,
+    trackId: value.trackId,
+    workContext: value.workContext,
+  });
+
+  return {
+    ...blueprint,
+    createdAt: value.createdAt,
+    id: value.id,
+  };
 }
 
 function isTrackId(value: unknown): value is TrackId {
@@ -339,6 +410,15 @@ function isTrackId(value: unknown): value is TrackId {
     value === "data-to-decision" ||
     value === "build-work-tool-codex" ||
     value === "executive-communication"
+  );
+}
+
+function isSavedTutorDraft(value: TutorBlueprint): value is TutorDraft {
+  return (
+    "createdAt" in value &&
+    typeof value.createdAt === "string" &&
+    "id" in value &&
+    typeof value.id === "string"
   );
 }
 
@@ -388,6 +468,7 @@ function LearningWorkspace({
   error,
   isBusy,
   onCreateTutorDraft,
+  onStartTutorDraft,
   onChangePasscode,
   routeItems,
   selectedTrack,
@@ -400,9 +481,8 @@ function LearningWorkspace({
   readonly draftTutors: readonly TutorDraft[];
   readonly error: string | null;
   readonly isBusy: boolean;
-  readonly onCreateTutorDraft: (
-    draft: Omit<TutorDraft, "createdAt" | "id">,
-  ) => void;
+  readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly onChangePasscode: () => void;
   readonly routeItems: readonly CurriculumRouteItem[];
   readonly selectedTrack: TrackSpec | null;
@@ -514,6 +594,7 @@ function LearningWorkspace({
             draftTutors={draftTutors}
             isBusy={isBusy}
             onCreateTutorDraft={onCreateTutorDraft}
+            onStartTutorDraft={onStartTutorDraft}
             onShowCurrentTutor={() => onWorkspaceViewChange("current")}
             routeSummary={routeSummary}
             selectedTrack={selectedTrack}
@@ -600,6 +681,7 @@ function WorkspacePanel({
   draftTutors,
   isBusy,
   onCreateTutorDraft,
+  onStartTutorDraft,
   onShowCurrentTutor,
   routeSummary,
   selectedTrack,
@@ -607,9 +689,8 @@ function WorkspacePanel({
 }: {
   readonly draftTutors: readonly TutorDraft[];
   readonly isBusy: boolean;
-  readonly onCreateTutorDraft: (
-    draft: Omit<TutorDraft, "createdAt" | "id">,
-  ) => void;
+  readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly onShowCurrentTutor: () => void;
   readonly routeSummary: RouteSummary;
   readonly selectedTrack: TrackSpec | null;
@@ -622,12 +703,14 @@ function WorkspacePanel({
           <BuildNewTutorPanel
             disabled={isBusy}
             onCreateTutorDraft={onCreateTutorDraft}
+            onStartTutorDraft={onStartTutorDraft}
           />
         ) : null}
         {view === "library" ? (
           <TutorLibraryPanel
             draftTutors={draftTutors}
             onShowCurrentTutor={onShowCurrentTutor}
+            onStartTutorDraft={onStartTutorDraft}
             routeSummary={routeSummary}
             selectedTrack={selectedTrack}
           />
@@ -646,51 +729,78 @@ function WorkspacePanel({
 
 function BuildNewTutorPanel({
   disabled,
+  onCancel,
   onCreateTutorDraft,
+  onStartTutorDraft,
 }: {
   readonly disabled: boolean;
-  readonly onCreateTutorDraft: (
-    draft: Omit<TutorDraft, "createdAt" | "id">,
-  ) => void;
+  readonly onCancel?: () => void;
+  readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
 }) {
-  const [trackId, setTrackId] = useState<TrackId>("data-to-decision");
+  const [trackId, setTrackId] = useState<TrackId | "auto">("auto");
   const [goal, setGoal] = useState("");
   const [workContext, setWorkContext] = useState("");
-  const selectedTemplate = getTrackSpec(trackId);
+  const [blueprint, setBlueprint] = useState<TutorBlueprint | null>(null);
 
-  const submitDraft = (event: FormEvent<HTMLFormElement>) => {
+  const resetPreview = () => {
+    setBlueprint(null);
+  };
+
+  const generatePlan = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedGoal = goal.trim();
-    if (trimmedGoal.length === 0 || selectedTemplate === null) return;
+    if (trimmedGoal.length === 0) return;
 
-    onCreateTutorDraft({
-      goal: trimmedGoal,
-      name: selectedTemplate.name,
-      trackId,
-      workContext: workContext.trim(),
-    });
+    setBlueprint(
+      createTutorBlueprint({
+        goal: trimmedGoal,
+        trackId: trackId === "auto" ? undefined : trackId,
+        workContext,
+      }),
+    );
+  };
+
+  const savePlan = () => {
+    if (blueprint === null) return;
+    onCreateTutorDraft(blueprint);
+    setBlueprint(null);
     setGoal("");
     setWorkContext("");
-    setTrackId("data-to-decision");
+    setTrackId("auto");
+  };
+
+  const startPlan = () => {
+    if (blueprint === null) return;
+    onStartTutorDraft(blueprint);
   };
 
   return (
     <section className="overflow-hidden rounded-xl border border-rule bg-card">
       <div className="border-b bg-primary/5 px-5 py-5 sm:px-7">
-        <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
-          Build New Tutor
-        </p>
-        <h2 className="mt-2 font-semibold text-2xl tracking-[-0.035em]">
-          Save a new tutor plan
-        </h2>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+              Build New Tutor
+            </p>
+            <h2 className="mt-2 font-semibold text-2xl tracking-[-0.035em]">
+              Generate a tutor plan from a goal
+            </h2>
+          </div>
+          {onCancel ? (
+            <Button onClick={onCancel} type="button" variant="outline">
+              Back to paths
+            </Button>
+          ) : null}
+        </div>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-          For this Build Week MVP, Dean can save tutor drafts against the three
-          prepared learning templates. A draft keeps the goal and context ready
-          for a fresh run.
+          Dean turns the learner goal into a concrete roadmap, saves it to the
+          Library, then launches the closest verified Build Week tutor path.
+          This keeps the demo honest while making the product loop feel real.
         </p>
       </div>
 
-      <form className="grid gap-5 p-5 sm:p-7" onSubmit={submitDraft}>
+      <form className="grid gap-5 p-5 sm:p-7" onSubmit={generatePlan}>
         <div className="grid gap-2">
           <label className="font-medium text-sm" htmlFor="new-tutor-goal">
             What should this tutor help with?
@@ -698,8 +808,11 @@ function BuildNewTutorPanel({
           <Input
             disabled={disabled}
             id="new-tutor-goal"
-            onChange={(event) => setGoal(event.target.value)}
-            placeholder="Example: Help me turn marketing data into a budget recommendation"
+            onChange={(event) => {
+              setGoal(event.target.value);
+              resetPreview();
+            }}
+            placeholder="Example: Help me turn campaign data into a budget recommendation"
             value={goal}
           />
         </div>
@@ -712,7 +825,10 @@ function BuildNewTutorPanel({
             className="min-h-24 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={disabled}
             id="new-tutor-context"
-            onChange={(event) => setWorkContext(event.target.value)}
+            onChange={(event) => {
+              setWorkContext(event.target.value);
+              resetPreview();
+            }}
             placeholder="Who is learning, what work do they do, and what result should they produce?"
             value={workContext}
           />
@@ -720,9 +836,28 @@ function BuildNewTutorPanel({
 
         <fieldset className="grid gap-3">
           <legend className="font-medium text-sm">
-            Choose a tutor template
+            Choose how Dean should route it
           </legend>
-          <div className="grid gap-2 md:grid-cols-3">
+          <div className="grid gap-2 md:grid-cols-4">
+            <button
+              className={cn(
+                "rounded-xl border p-4 text-left text-sm transition-[border-color,background-color] hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60",
+                trackId === "auto"
+                  ? "border-primary/45 bg-primary/8"
+                  : "border-rule bg-background/62",
+              )}
+              disabled={disabled}
+              onClick={() => {
+                setTrackId("auto");
+                resetPreview();
+              }}
+              type="button"
+            >
+              <span className="block font-medium">Let Dean choose</span>
+              <span className="mt-2 block text-muted-foreground leading-5">
+                Route by the words in the goal and context.
+              </span>
+            </button>
             {TRACK_CATALOG.map((track) => (
               <button
                 className={cn(
@@ -733,7 +868,10 @@ function BuildNewTutorPanel({
                 )}
                 disabled={disabled}
                 key={track.id}
-                onClick={() => setTrackId(track.id)}
+                onClick={() => {
+                  setTrackId(track.id);
+                  resetPreview();
+                }}
                 type="button"
               >
                 <span className="block font-medium">{track.name}</span>
@@ -745,36 +883,125 @@ function BuildNewTutorPanel({
           </div>
         </fieldset>
 
-        <div className="rounded-lg border border-rule bg-muted/35 p-4 text-sm leading-6">
-          <p className="font-medium">What happens next?</p>
-          <p className="mt-1 text-muted-foreground">
-            This saves a tutor draft in this browser’s local library. To run it
-            as a clean tutor session, start a fresh Dean session and choose the
-            matching prepared path.
-          </p>
-        </div>
-
         <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5">
-          <p className="text-muted-foreground text-xs">
-            Full arbitrary subject generation is still outside the current MVP.
+          <p className="max-w-xl text-muted-foreground text-xs">
+            Build Week boundary: Dean can create a plan for any goal, but the
+            live tutor runs through one of the three verified paths.
           </p>
           <Button disabled={disabled || goal.trim().length === 0} type="submit">
-            Save tutor draft
+            Generate tutor plan
           </Button>
         </div>
       </form>
+
+      {blueprint ? (
+        <TutorPlanPreview
+          blueprint={blueprint}
+          disabled={disabled}
+          onSave={savePlan}
+          onStart={startPlan}
+        />
+      ) : null}
     </section>
+  );
+}
+
+function TutorPlanPreview({
+  blueprint,
+  disabled,
+  onSave,
+  onStart,
+}: {
+  readonly blueprint: TutorBlueprint;
+  readonly disabled: boolean;
+  readonly onSave: () => void;
+  readonly onStart: () => void;
+}) {
+  return (
+    <div className="border-t bg-background/48 p-5 sm:p-7">
+      <div className="rounded-xl border border-rule bg-card p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+              Generated plan
+            </p>
+            <h3 className="mt-2 font-semibold text-xl tracking-[-0.025em]">
+              {blueprint.name}
+            </h3>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              {blueprint.fitReason}
+            </p>
+          </div>
+          <span className="rounded-full border bg-primary/8 px-3 py-1 text-primary text-xs">
+            {blueprint.verificationLabel}
+          </span>
+        </div>
+
+        <ol className="mt-5 grid gap-3">
+          {blueprint.steps.map((step, index) => (
+            <TutorPlanStepCard index={index} key={step.title} step={step} />
+          ))}
+        </ol>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
+          <p className="max-w-xl text-muted-foreground text-xs leading-5">
+            Start tutor saves this plan, clears the current chat, and launches a
+            clean Dean session using the selected verified path.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={disabled}
+              onClick={onSave}
+              type="button"
+              variant="outline"
+            >
+              Save to Library
+            </Button>
+            <Button disabled={disabled} onClick={onStart} type="button">
+              Start tutor
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TutorPlanStepCard({
+  index,
+  step,
+}: {
+  readonly index: number;
+  readonly step: TutorPlanStep;
+}) {
+  return (
+    <li className="rounded-lg border border-rule bg-background/62 p-4">
+      <div className="flex gap-3">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+          {index + 1}
+        </span>
+        <div>
+          <p className="font-medium">{step.title}</p>
+          <p className="mt-1 text-muted-foreground text-sm leading-6">
+            {step.plainEnglish}
+          </p>
+          <p className="mt-2 text-primary text-xs">Evidence: {step.evidence}</p>
+        </div>
+      </div>
+    </li>
   );
 }
 
 function TutorLibraryPanel({
   draftTutors,
   onShowCurrentTutor,
+  onStartTutorDraft,
   routeSummary,
   selectedTrack,
 }: {
   readonly draftTutors: readonly TutorDraft[];
   readonly onShowCurrentTutor: () => void;
+  readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly routeSummary: RouteSummary;
   readonly selectedTrack: TrackSpec | null;
 }) {
@@ -810,14 +1037,15 @@ function TutorLibraryPanel({
             const track = getTrackSpec(draft.trackId);
             return (
               <TutorCard
-                actionLabel="Open current tutor"
+                actionLabel="Start tutor"
                 description={draft.goal}
                 key={draft.id}
                 kicker={formatDraftDate(draft.createdAt)}
                 name={draft.name}
-                onAction={onShowCurrentTutor}
+                onAction={() => onStartTutorDraft(draft)}
                 status="Draft"
-                subtext={track?.verificationLabel ?? draft.workContext}
+                subtext={track?.verificationLabel ?? draft.verificationLabel}
+                steps={draft.steps}
               />
             );
           })}
@@ -835,6 +1063,7 @@ function TutorCard({
   kicker,
   name,
   onAction,
+  steps,
   status,
   subtext,
 }: {
@@ -843,6 +1072,7 @@ function TutorCard({
   readonly kicker: string;
   readonly name: string;
   readonly onAction: () => void;
+  readonly steps?: readonly TutorPlanStep[];
   readonly status: string;
   readonly subtext?: string;
 }) {
@@ -862,6 +1092,21 @@ function TutorCard({
           </p>
           {subtext ? (
             <p className="mt-2 text-primary text-xs">{subtext}</p>
+          ) : null}
+          {steps ? (
+            <ol className="mt-4 grid gap-2">
+              {steps.slice(0, 4).map((step, index) => (
+                <li
+                  className="flex gap-2 text-muted-foreground text-xs leading-5"
+                  key={step.title}
+                >
+                  <span className="text-primary tabular-nums">
+                    {index + 1}.
+                  </span>
+                  <span>{step.title}</span>
+                </li>
+              ))}
+            </ol>
           ) : null}
         </div>
         <span className="rounded-full border bg-background px-2.5 py-1 text-muted-foreground text-xs">

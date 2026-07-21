@@ -4,6 +4,7 @@
   "type": "module",
   "imports": {
     "#*": "./agent/*",
+    "#lib/*": "./lib/*.ts",
     "#evals/*": "./evals/*",
     "#grading/*": "./lib/grading/*.ts"
   },
