@@ -246,6 +246,13 @@ export function DemoCapabilities() {
               <CapabilityItem text="Custom tutor plans launch through the three verified MVP paths." />
               <CapabilityItem text="Session work is demo-scoped, not a full account system." />
             </ul>
+            <p className="mt-4 border-rule border-t pt-4 text-sm leading-6 text-muted-foreground">
+              <span className="font-medium text-foreground">
+                Future direction:
+              </span>{" "}
+              add more professional courses only when each one has a clear
+              evidence and verification plan.
+            </p>
           </div>
         </div>
       </div>

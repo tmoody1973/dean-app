@@ -24,10 +24,30 @@ export const STUDY_PARTNER_OPTIONS = [
 
 export type StudyPartnerMode = (typeof STUDY_PARTNER_OPTIONS)[number]["id"];
 
+export type StudyPartnerRequest = {
+  readonly clientContext: {
+    readonly mode: StudyPartnerMode;
+    readonly type: "dean.study-partner.v1";
+  };
+  readonly message: string;
+};
+
 export function getStudyPartnerOption(mode: StudyPartnerMode) {
   const option = STUDY_PARTNER_OPTIONS.find((item) => item.id === mode);
   if (option === undefined) {
     throw new Error(`Unsupported study partner mode: ${mode}`);
   }
   return option;
+}
+
+export function createStudyPartnerRequest(
+  mode: StudyPartnerMode,
+): StudyPartnerRequest {
+  return {
+    clientContext: {
+      mode,
+      type: "dean.study-partner.v1",
+    },
+    message: getStudyPartnerOption(mode).message,
+  };
 }

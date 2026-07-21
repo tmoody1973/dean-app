@@ -55,7 +55,7 @@ import {
   type TutorPlanStep,
 } from "@/lib/tutor-builder";
 import {
-  getStudyPartnerOption,
+  createStudyPartnerRequest,
   STUDY_PARTNER_OPTIONS,
   type StudyPartnerMode,
 } from "@/lib/study-partner";
@@ -291,15 +291,9 @@ function LearningSession({
 
   const handleStartStudyPartner = async (mode: StudyPartnerMode) => {
     if (isBusy || isEmpty) return;
-    const option = getStudyPartnerOption(mode);
+    const request = createStudyPartnerRequest(mode);
     setWorkspaceView("current");
-    await agent.send({
-      message: option.message,
-      clientContext: {
-        mode,
-        type: "dean.study-partner.v1",
-      },
-    });
+    await agent.send(request);
   };
 
   const handleLearningModeAction = async (
