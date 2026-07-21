@@ -55,6 +55,11 @@ import {
   type TutorPlanStep,
 } from "@/lib/tutor-builder";
 import {
+  getStudyPartnerOption,
+  STUDY_PARTNER_OPTIONS,
+  type StudyPartnerMode,
+} from "@/lib/study-partner";
+import {
   getTrackSpec,
   TRACK_CATALOG,
   type TrackId,
@@ -74,7 +79,7 @@ import {
 } from "./demo-moments";
 
 type AgentStatus = ReturnType<typeof useEveAgent>["status"];
-type WorkspaceView = "current" | "build" | "library" | "profile";
+type WorkspaceView = "current" | "build" | "library" | "partner" | "profile";
 
 type TutorDraft = TutorBlueprint & {
   readonly createdAt: string;
@@ -273,6 +278,19 @@ function LearningSession({
     });
   };
 
+  const handleStartStudyPartner = async (mode: StudyPartnerMode) => {
+    if (isBusy || isEmpty) return;
+    const option = getStudyPartnerOption(mode);
+    setWorkspaceView("current");
+    await agent.send({
+      message: option.message,
+      clientContext: {
+        mode,
+        type: "dean.study-partner.v1",
+      },
+    });
+  };
+
   const composer = (
     <PromptInput onSubmit={handleSubmit}>
       <PromptInputTextarea placeholder="Ask Dean to explain, quiz, adapt, or continue…" />
@@ -291,6 +309,7 @@ function LearningSession({
           isBusy={isBusy}
           onCreateTutorDraft={handleCreateTutorDraft}
           onStartTutorDraft={handleStartTutorDraft}
+          onStartStudyPartner={handleStartStudyPartner}
           onChangePasscode={onChangePasscode}
           routeItems={demo.routeItems}
           selectedTrack={selectedTrack}
@@ -469,6 +488,7 @@ function LearningWorkspace({
   isBusy,
   onCreateTutorDraft,
   onStartTutorDraft,
+  onStartStudyPartner,
   onChangePasscode,
   routeItems,
   selectedTrack,
@@ -483,6 +503,7 @@ function LearningWorkspace({
   readonly isBusy: boolean;
   readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onStartStudyPartner: (mode: StudyPartnerMode) => void;
   readonly onChangePasscode: () => void;
   readonly routeItems: readonly CurriculumRouteItem[];
   readonly selectedTrack: TrackSpec | null;
@@ -522,6 +543,12 @@ function LearningWorkspace({
             icon={<LibraryIcon />}
             label="Tutor Library"
             onClick={() => onWorkspaceViewChange("library")}
+          />
+          <WorkspaceNavItem
+            active={workspaceView === "partner"}
+            icon={<MessageCircleIcon />}
+            label="AI Study Partner"
+            onClick={() => onWorkspaceViewChange("partner")}
           />
           <WorkspaceNavItem
             active={workspaceView === "profile"}
@@ -595,6 +622,7 @@ function LearningWorkspace({
             isBusy={isBusy}
             onCreateTutorDraft={onCreateTutorDraft}
             onStartTutorDraft={onStartTutorDraft}
+            onStartStudyPartner={onStartStudyPartner}
             onShowCurrentTutor={() => onWorkspaceViewChange("current")}
             routeSummary={routeSummary}
             selectedTrack={selectedTrack}
@@ -682,6 +710,7 @@ function WorkspacePanel({
   isBusy,
   onCreateTutorDraft,
   onStartTutorDraft,
+  onStartStudyPartner,
   onShowCurrentTutor,
   routeSummary,
   selectedTrack,
@@ -691,6 +720,7 @@ function WorkspacePanel({
   readonly isBusy: boolean;
   readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onStartStudyPartner: (mode: StudyPartnerMode) => void;
   readonly onShowCurrentTutor: () => void;
   readonly routeSummary: RouteSummary;
   readonly selectedTrack: TrackSpec | null;
@@ -715,6 +745,13 @@ function WorkspacePanel({
             selectedTrack={selectedTrack}
           />
         ) : null}
+        {view === "partner" ? (
+          <StudyPartnerPanel
+            disabled={isBusy}
+            onStart={onStartStudyPartner}
+            selectedTrack={selectedTrack}
+          />
+        ) : null}
         {view === "profile" ? (
           <ProfilePanel
             draftCount={draftTutors.length}
@@ -724,6 +761,63 @@ function WorkspacePanel({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function StudyPartnerPanel({
+  disabled,
+  onStart,
+  selectedTrack,
+}: {
+  readonly disabled: boolean;
+  readonly onStart: (mode: StudyPartnerMode) => void;
+  readonly selectedTrack: TrackSpec | null;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-rule bg-card">
+      <div className="border-b bg-primary/5 px-5 py-5 sm:px-7">
+        <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+          AI Study Partner
+        </p>
+        <h2 className="mt-2 font-semibold text-2xl tracking-[-0.035em]">
+          Learn by thinking out loud
+        </h2>
+        <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+          Choose a focused conversation. Dean stays with your current tutor path
+          and gives you room to answer before it helps.
+        </p>
+      </div>
+
+      <div className="grid gap-3 p-5 sm:p-7">
+        {STUDY_PARTNER_OPTIONS.map((option) => (
+          <article
+            className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-rule bg-background/62 p-4"
+            key={option.id}
+          >
+            <div>
+              <h3 className="font-medium">{option.label}</h3>
+              <p className="mt-1 text-muted-foreground text-sm leading-6">
+                {option.description}
+              </p>
+            </div>
+            <Button
+              disabled={disabled}
+              onClick={() => onStart(option.id)}
+              type="button"
+              variant="outline"
+            >
+              Start together
+            </Button>
+          </article>
+        ))}
+      </div>
+
+      <div className="border-t bg-muted/25 px-5 py-4 text-muted-foreground text-xs leading-5 sm:px-7">
+        {selectedTrack
+          ? `This conversation uses the active ${selectedTrack.name} path and its ${selectedTrack.verificationLabel.toLowerCase()} boundary.`
+          : "Start a tutor path first so your Study Partner has a lesson to work from."}
+      </div>
+    </section>
   );
 }
 

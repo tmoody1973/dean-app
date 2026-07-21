@@ -92,6 +92,7 @@ export function DemoCapabilities() {
               <CapabilityItem text="Pick one of three prepared tutor paths." />
               <CapabilityItem text="Build a custom tutor plan from a work goal." />
               <CapabilityItem text="Answer calibration questions so Dean can build a route." />
+              <CapabilityItem text="Use an AI Study Partner to talk through and rehearse the lesson." />
             </ul>
           </div>
         </div>
