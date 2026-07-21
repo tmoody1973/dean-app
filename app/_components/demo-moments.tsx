@@ -126,7 +126,7 @@ export function DemoCapabilities() {
             </p>
             <ul className="mt-3 space-y-2 text-muted-foreground text-sm leading-6">
               <CapabilityItem text="No open-ended 'teach me anything' generation yet." />
-              <CapabilityItem text="Library, profile, and new tutor nav are visual placeholders." />
+              <CapabilityItem text="Build New Tutor and Library save local drafts only." />
               <CapabilityItem text="Session work is demo-scoped, not a full account system." />
             </ul>
           </div>
