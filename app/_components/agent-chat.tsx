@@ -60,6 +60,14 @@ import {
   type StudyPartnerMode,
 } from "@/lib/study-partner";
 import {
+  getLearningModeAction,
+  LEARNING_MODE_ACTIONS,
+  LEARNING_MODE_OPTIONS,
+  type LearningActionId,
+  type LearningActionMode,
+  type LearningMode,
+} from "@/lib/learning-modes";
+import {
   getTrackSpec,
   TRACK_CATALOG,
   type TrackId,
@@ -133,6 +141,7 @@ function LearningSession({
   const completingModuleIds = useRef(new Set<string>());
   const didLoadTutorLibrary = useRef(false);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("current");
+  const [learningMode, setLearningMode] = useState<LearningMode>("learn");
   const [tutorDrafts, setTutorDrafts] = useState<readonly TutorDraft[]>([]);
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
   const isEmpty = agent.data.messages.length === 0;
@@ -231,6 +240,7 @@ function LearningSession({
 
   const handleTrackSelect = async (trackId: TrackId, message: string) => {
     if (isBusy) return;
+    setLearningMode("learn");
     setWorkspaceView("current");
     await agent.send({ message });
   };
@@ -258,6 +268,7 @@ function LearningSession({
     completedModuleIds.current = new Set<string>();
     completingModuleIds.current = new Set<string>();
     agent.reset();
+    setLearningMode("learn");
     setWorkspaceView("current");
     await agent.send({
       message: createTutorLaunchMessage(draft),
@@ -291,6 +302,23 @@ function LearningSession({
     });
   };
 
+  const handleLearningModeAction = async (
+    mode: LearningActionMode,
+    actionId: LearningActionId,
+  ) => {
+    if (isBusy || isEmpty) return;
+    const action = getLearningModeAction(mode, actionId);
+    setLearningMode("learn");
+    await agent.send({
+      message: action.message,
+      clientContext: {
+        actionId,
+        mode,
+        type: "dean.learning-mode-action.v1",
+      },
+    });
+  };
+
   const composer = (
     <PromptInput onSubmit={handleSubmit}>
       <PromptInputTextarea placeholder="Ask Dean to explain, quiz, adapt, or continue…" />
@@ -307,7 +335,10 @@ function LearningSession({
           draftTutors={tutorDrafts}
           error={agent.error?.message ?? null}
           isBusy={isBusy}
+          learningMode={learningMode}
           onCreateTutorDraft={handleCreateTutorDraft}
+          onLearningModeAction={handleLearningModeAction}
+          onLearningModeChange={setLearningMode}
           onStartTutorDraft={handleStartTutorDraft}
           onStartStudyPartner={handleStartStudyPartner}
           onChangePasscode={onChangePasscode}
@@ -362,6 +393,7 @@ function LearningSession({
           ) : (
             <>
               <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
+              <GettingStartedGuide />
               <Button
                 className="gap-2"
                 disabled={isBusy}
@@ -486,7 +518,10 @@ function LearningWorkspace({
   draftTutors,
   error,
   isBusy,
+  learningMode,
   onCreateTutorDraft,
+  onLearningModeAction,
+  onLearningModeChange,
   onStartTutorDraft,
   onStartStudyPartner,
   onChangePasscode,
@@ -501,7 +536,13 @@ function LearningWorkspace({
   readonly draftTutors: readonly TutorDraft[];
   readonly error: string | null;
   readonly isBusy: boolean;
+  readonly learningMode: LearningMode;
   readonly onCreateTutorDraft: (blueprint: TutorBlueprint) => void;
+  readonly onLearningModeAction: (
+    mode: LearningActionMode,
+    actionId: LearningActionId,
+  ) => void;
+  readonly onLearningModeChange: (mode: LearningMode) => void;
   readonly onStartTutorDraft: (blueprint: TutorBlueprint) => void;
   readonly onStartStudyPartner: (mode: StudyPartnerMode) => void;
   readonly onChangePasscode: () => void;
@@ -580,13 +621,22 @@ function LearningWorkspace({
             {selectedTrack ? <TrackSignal track={selectedTrack} /> : null}
           </div>
           <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border bg-card text-center text-sm">
-            <span className="border-r px-3 py-2 font-medium text-primary">
-              Learn
-            </span>
-            <span className="border-r px-3 py-2 text-muted-foreground">
-              Explain differently
-            </span>
-            <span className="px-3 py-2 text-muted-foreground">Practice</span>
+            {LEARNING_MODE_OPTIONS.map((mode, index) => (
+              <button
+                className={cn(
+                  "px-3 py-2 font-medium transition-[background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  index < LEARNING_MODE_OPTIONS.length - 1 && "border-r",
+                  learningMode === mode.id
+                    ? "bg-primary/8 text-primary"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                )}
+                key={mode.id}
+                onClick={() => onLearningModeChange(mode.id)}
+                type="button"
+              >
+                {mode.label}
+              </button>
+            ))}
           </div>
           <CompactRouteSummary summary={routeSummary} />
         </header>
@@ -615,7 +665,15 @@ function LearningWorkspace({
         ) : null}
 
         {workspaceView === "current" ? (
-          children
+          learningMode === "learn" ? (
+            children
+          ) : (
+            <LearningModePanel
+              disabled={isBusy}
+              mode={learningMode}
+              onAction={onLearningModeAction}
+            />
+          )
         ) : (
           <WorkspacePanel
             draftTutors={draftTutors}
@@ -702,6 +760,123 @@ function LearningWorkspace({
         </ol>
       </aside>
     </section>
+  );
+}
+
+function GettingStartedGuide() {
+  return (
+    <section
+      aria-labelledby="getting-started-title"
+      className="w-full max-w-6xl rounded-xl border border-primary/20 bg-primary/5 p-5 sm:p-6"
+    >
+      <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
+        New to Dean?
+      </p>
+      <h2
+        className="mt-2 font-semibold text-xl tracking-[-0.025em]"
+        id="getting-started-title"
+      >
+        Start here — it takes about three minutes
+      </h2>
+      <ol className="mt-4 grid gap-3 md:grid-cols-3">
+        <OnboardingStep
+          number={1}
+          text="Choose a prepared path above, or build a tutor around a work goal."
+          title="Pick your goal"
+        />
+        <OnboardingStep
+          number={2}
+          text="Answer Dean’s three short questions so it can make the lesson fit you."
+          title="Give Dean context"
+        />
+        <OnboardingStep
+          number={3}
+          text="Use Learn, Explain differently, and Practice whenever you need help."
+          title="Learn by doing"
+        />
+      </ol>
+    </section>
+  );
+}
+
+function OnboardingStep({
+  number,
+  text,
+  title,
+}: {
+  readonly number: number;
+  readonly text: string;
+  readonly title: string;
+}) {
+  return (
+    <li className="rounded-lg border border-rule bg-background/62 p-4">
+      <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+        {number}
+      </span>
+      <p className="mt-3 font-medium text-sm">{title}</p>
+      <p className="mt-1 text-muted-foreground text-sm leading-6">{text}</p>
+    </li>
+  );
+}
+
+function LearningModePanel({
+  disabled,
+  mode,
+  onAction,
+}: {
+  readonly disabled: boolean;
+  readonly mode: LearningActionMode;
+  readonly onAction: (
+    mode: LearningActionMode,
+    actionId: LearningActionId,
+  ) => void;
+}) {
+  const isExplain = mode === "explain";
+  const actions = LEARNING_MODE_ACTIONS[mode];
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+      <section className="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border border-rule bg-card">
+        <div className="border-b bg-primary/5 px-5 py-5 sm:px-7">
+          <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+            {isExplain ? "Explain differently" : "Practice"}
+          </p>
+          <h2 className="mt-2 font-semibold text-2xl tracking-[-0.035em]">
+            {isExplain
+              ? "Choose the kind of help you need"
+              : "Try the idea before moving on"}
+          </h2>
+          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+            {isExplain
+              ? "Pick one. Dean will return to the lesson with a clearer explanation."
+              : "Pick one. Dean will give you a small, focused way to use the active lesson."}
+          </p>
+        </div>
+        <div className="grid gap-3 p-5 sm:p-7">
+          {actions.map((action) => (
+            <article
+              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-rule bg-background/62 p-4"
+              key={action.id}
+            >
+              <div>
+                <h3 className="font-medium">{action.label}</h3>
+                <p className="mt-1 text-muted-foreground text-sm leading-6">
+                  {action.description}
+                </p>
+              </div>
+              <Button
+                disabled={disabled}
+                onClick={() => onAction(mode, action.id)}
+                type="button"
+                variant="outline"
+              >
+                Start
+              </Button>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
