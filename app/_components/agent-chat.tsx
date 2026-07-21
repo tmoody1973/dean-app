@@ -327,7 +327,12 @@ function LearningSession({
   );
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+    <main
+      className={cn(
+        "flex flex-col bg-background text-foreground",
+        isEmpty ? "min-h-dvh overflow-y-auto" : "h-dvh overflow-hidden",
+      )}
+    >
       {isEmpty ? null : (
         <LearningWorkspace
           agentStatus={agent.status}
@@ -382,7 +387,7 @@ function LearningSession({
       )}
 
       {isEmpty ? (
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center gap-8 px-4 py-6 sm:px-6 sm:py-10">
           {workspaceView === "build" ? (
             <BuildNewTutorPanel
               disabled={isBusy}
@@ -392,18 +397,12 @@ function LearningSession({
             />
           ) : (
             <>
-              <TrackPicker disabled={isBusy} onSelect={handleTrackSelect} />
-              <GettingStartedGuide />
-              <Button
-                className="gap-2"
+              <TrackPicker
                 disabled={isBusy}
-                onClick={() => setWorkspaceView("build")}
-                type="button"
-                variant="outline"
-              >
-                <PlusIcon aria-hidden="true" className="size-4" />
-                Build a custom tutor
-              </Button>
+                onBuildTutor={() => setWorkspaceView("build")}
+                onSelect={handleTrackSelect}
+              />
+              <GettingStartedGuide />
               <DemoCapabilities />
               <ScheduledReviewNotice />
               <div className="w-full">{composer}</div>
@@ -768,15 +767,16 @@ function GettingStartedGuide() {
     <section
       aria-labelledby="getting-started-title"
       className="w-full max-w-6xl rounded-xl border border-primary/20 bg-primary/5 p-5 sm:p-6"
+      id="how-dean-works"
     >
       <p className="text-primary text-xs font-semibold tracking-[0.16em] uppercase">
-        New to Dean?
+        How Dean works
       </p>
       <h2
         className="mt-2 font-semibold text-xl tracking-[-0.025em]"
         id="getting-started-title"
       >
-        Start here — it takes about three minutes
+        The first three minutes, in plain English
       </h2>
       <ol className="mt-4 grid gap-3 md:grid-cols-3">
         <OnboardingStep

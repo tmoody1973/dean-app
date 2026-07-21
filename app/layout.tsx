@@ -20,11 +20,16 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "dean",
-  description: "A Next.js starter for eve agents with AI Elements.",
+  title: "Dean — professional learning with evidence",
+  description:
+    "Dean turns a professional goal into an interactive tutor with visible plans, practice, and clearly labeled evidence.",
 };
 
-export default function RootLayout({ children }: { readonly children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   return (
     <html className={cn(sans.variable, mono.variable)} lang="en">
       <body>
